@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no", <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"/>/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"/>
   <meta name="apple-mobile-web-app-capable" content="yes"/>
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
   <meta name="mobile-web-app-capable" content="yes"/>
@@ -14,254 +14,279 @@
 <body>
 
   <!-- TOPBAR -->
-  <div class="topbar">
+  <header class="topbar">
     <div class="topbar-left">
       <span class="topbar-title">AstroControl</span>
       <div class="status-row">
-        <span class="si" id="st-pi">  <span class="dot dx"></span><span class="si-label">Pi</span></span>
+        <span class="si" id="st-pi"><span class="dot dx"></span><span class="si-label">Pi</span></span>
         <span class="si" id="st-indi"><span class="dot dx"></span><span class="si-label">INDI</span></span>
-        <span class="si" id="st-gps"> <span class="dot dx"></span><span class="si-label">GPS</span></span>
-        <span class="si" id="st-ap">  <span class="dot dx"></span><span class="si-label">AP</span></span>
+        <span class="si" id="st-gps"><span class="dot dx"></span><span class="si-label">GPS</span></span>
+        <span class="si" id="st-ap"><span class="dot dx"></span><span class="si-label">AP</span></span>
       </div>
     </div>
     <span class="utc-clock" id="utc"></span>
-  </div>
+  </header>
 
   <!-- TABS -->
-  <div class="tabs" id="tabs-bar">
+  <nav class="tabs">
     <div class="tab active" onclick="sw('mount',this)" title="Montagem">
-      <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><circle cx="7" cy="7" r="5"/><line x1="7" y1="2" x2="7" y2="12"/><line x1="2" y1="7" x2="12" y2="7"/></svg>
+      <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.3"><circle cx="7" cy="7" r="5"/><line x1="7" y1="2" x2="7" y2="12"/><line x1="2" y1="7" x2="12" y2="7"/></svg>
       <span class="tab-label">Montagem</span>
     </div>
-    <div class="tab" onclick="sw('align',this)" title="Alinhamento">
-      <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><circle cx="7" cy="7" r="5"/><circle cx="7" cy="7" r="1.5" fill="currentColor"/><line x1="7" y1="1" x2="7" y2="3"/><line x1="7" y1="11" x2="7" y2="13"/><line x1="1" y1="7" x2="3" y2="7"/><line x1="11" y1="7" x2="13" y2="7"/></svg>
+    <div class="tab" onclick="sw('align',this)" title="Polar">
+      <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.3"><circle cx="7" cy="7" r="5"/><circle cx="7" cy="7" r="1.5" fill="currentColor"/><line x1="7" y1="1" x2="7" y2="3"/><line x1="7" y1="11" x2="7" y2="13"/><line x1="1" y1="7" x2="3" y2="7"/><line x1="11" y1="7" x2="13" y2="7"/></svg>
       <span class="tab-label">Polar</span>
     </div>
     <div class="tab" onclick="sw('kstars',this)" title="KStars/Ekos">
-      <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><rect x="1" y="2" width="12" height="9" rx="1.5"/><line x1="1" y1="5" x2="13" y2="5"/><circle cx="4" cy="3.5" r="0.8" fill="currentColor"/><circle cx="6.5" cy="3.5" r="0.8" fill="currentColor"/></svg>
+      <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.3"><rect x="1" y="2" width="12" height="9" rx="1.5"/><line x1="1" y1="5" x2="13" y2="5"/><circle cx="4" cy="3.5" r="0.8" fill="currentColor"/><circle cx="6.5" cy="3.5" r="0.8" fill="currentColor"/></svg>
       <span class="tab-label">KStars</span>
     </div>
     <div class="tab" onclick="sw('phd2',this)" title="PHD2 Guiding">
-      <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><polyline points="1,10 3,6 5,8 7,4 9,7 11,5 13,9"/></svg>
+      <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.3"><polyline points="1,10 3,6 5,8 7,4 9,7 11,5 13,9"/></svg>
       <span class="tab-label">PHD2</span>
     </div>
-    <div class="tab" onclick="sw('desktop',this)" title="Desktop remoto">
-      <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><rect x="1" y="2" width="12" height="8" rx="1"/><line x1="5" y1="12" x2="9" y2="12"/><line x1="7" y1="10" x2="7" y2="12"/></svg>
+    <div class="tab" onclick="sw('desktop',this)" title="Desktop XFCE">
+      <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.3"><rect x="1" y="2" width="12" height="8" rx="1"/><line x1="5" y1="12" x2="9" y2="12"/><line x1="7" y1="10" x2="7" y2="12"/></svg>
       <span class="tab-label">Desktop</span>
     </div>
     <div class="tab" onclick="sw('terminal',this)" title="Terminal SSH">
-      <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><rect x="1" y="2" width="12" height="10" rx="1.5"/><polyline points="3,6 5,8 3,10"/><line x1="6" y1="10" x2="11" y2="10"/></svg>
+      <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.3"><rect x="1" y="2" width="12" height="10" rx="1.5"/><polyline points="3,6 5,8 3,10"/><line x1="6" y1="10" x2="11" y2="10"/></svg>
       <span class="tab-label">Terminal</span>
     </div>
     <div class="tab" onclick="sw('drivers',this)" title="Drivers INDI">
-      <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><rect x="1" y="1" width="5" height="5" rx="1"/><rect x="8" y="1" width="5" height="5" rx="1"/><rect x="1" y="8" width="5" height="5" rx="1"/><rect x="8" y="8" width="5" height="5" rx="1"/></svg>
+      <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.3"><rect x="1" y="1" width="5" height="5" rx="1"/><rect x="8" y="1" width="5" height="5" rx="1"/><rect x="1" y="8" width="5" height="5" rx="1"/><rect x="8" y="8" width="5" height="5" rx="1"/></svg>
       <span class="tab-label">Drivers</span>
     </div>
     <div class="tab" onclick="sw('network',this)" title="Rede">
-      <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M7 11C4.8 11 3 9.2 3 7s1.8-4 4-4 4 1.8 4 4-1.8 4-4 4z"/><path d="M7 3c-1.1 1.3-1.7 2.6-1.7 4S5.9 9.7 7 11"/><path d="M7 3c1.1 1.3 1.7 2.6 1.7 4S8.1 9.7 7 11"/><line x1="3" y1="7" x2="11" y2="7"/></svg>
+      <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M7 11C4.8 11 3 9.2 3 7s1.8-4 4-4 4 1.8 4 4-1.8 4-4 4z"/><path d="M7 3c-1.1 1.3-1.7 2.6-1.7 4S5.9 9.7 7 11"/><path d="M7 3c1.1 1.3 1.7 2.6 1.7 4S8.1 9.7 7 11"/><line x1="3" y1="7" x2="11" y2="7"/></svg>
       <span class="tab-label">Rede</span>
     </div>
-  </div>
+  </nav>
 
-  <!-- BODY -->
-  <div class="body">
+  <!-- CONTENT AREA — único container de abas -->
+  <main class="content">
 
-    <!-- ═══════════════════════════════ MONTAGEM ═══════════════════════════════ -->
+    <!-- ══════════ MONTAGEM ══════════ -->
     <div id="p-mount" class="panel active">
-      <div class="col col-1">
-        <div class="sec">Posição atual</div>
-        <div class="g2">
-          <div class="card"><div class="clabel">AR</div><div class="cval small" id="m-ra">--</div></div>
-          <div class="card"><div class="clabel">Dec</div><div class="cval small" id="m-dec">--</div></div>
-          <div class="card"><div class="clabel">Altitude</div><div class="cval" id="m-alt">--</div></div>
-          <div class="card"><div class="clabel">Azimute</div><div class="cval" id="m-az">--</div></div>
-        </div>
 
-        <div class="mount-state-row">
-          <span class="mount-badge mount-badge-disconnected" id="mount-state-badge">Desconectado</span>
-        </div>
-
-        <div class="sec">Rastreamento</div>
-        <div class="trk">
-          <button onclick="setTrk(this,'Sidereal')" data-mode="Sidereal" class="active">Sideral</button>
-          <button onclick="setTrk(this,'Lunar')"    data-mode="Lunar">Lunar</button>
-          <button onclick="setTrk(this,'Solar')"    data-mode="Solar">Solar</button>
-          <button onclick="setTrk(this,'None')"     data-mode="None" class="off-btn">Off</button>
-        </div>
-
-        <div class="sec" style="margin-top:10px">GoTo</div>
-        <div class="row">
-          <input class="inp" type="text" id="goto-name" placeholder="Objeto (M42...)" autocomplete="off"/>
-          <button class="bp bp-p" onclick="doGotoName()">Ir</button>
-        </div>
-        <div class="row">
-          <input class="inp" type="text" id="goto-ra"  placeholder="AR" autocomplete="off"/>
-          <input class="inp" type="text" id="goto-dec" placeholder="Dec" autocomplete="off"/>
-          <button class="bp bp-s" onclick="doGotoCoords()">Ir</button>
-        </div>
-        
-        <div class="mount-actions" style="margin-top: 10px;">
-          <button class="bp-full" onclick="syncMount()">Sync posição atual</button>
-          <button class="bp-full bp-full-secondary" onclick="parkMount()">Park</button>
-        </div>
+      <!-- Barra de painel com fullscreen -->
+      <div class="panel-bar">
+        <span class="panel-bar-title">Montagem</span>
+        <button class="bp-fs" onclick="enterFullscreen('p-mount')" title="Tela cheia">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M1 5V1h4M9 1h4v4M13 9v4H9M5 13H1V9"/></svg>
+        </button>
       </div>
 
-      <div class="col col-joy">
-        <div class="sec" style="align-self:flex-start;width:100%">Velocidade</div>
-        <div class="rates">
-          <div class="rb" onclick="setRate(this,1)">1×</div>
-          <div class="rb" onclick="setRate(this,2)">2×</div>
-          <div class="rb" onclick="setRate(this,8)">8×</div>
-          <div class="rb active" onclick="setRate(this,16)">16×</div>
-          <div class="rb" onclick="setRate(this,64)">64×</div>
-          <div class="rb" onclick="setRate(this,0)">Máx</div>
+      <div class="mount-body">
+        <!-- Bloco esquerdo / superior: posição + GoTo + ações -->
+        <div class="mount-info">
+          <div class="sec">Posição atual</div>
+          <div class="g2">
+            <div class="card"><div class="clabel">AR</div><div class="cval small" id="m-ra">--</div></div>
+            <div class="card"><div class="clabel">Dec</div><div class="cval small" id="m-dec">--</div></div>
+            <div class="card"><div class="clabel">Altitude</div><div class="cval" id="m-alt">--</div></div>
+            <div class="card"><div class="clabel">Azimute</div><div class="cval" id="m-az">--</div></div>
+          </div>
+
+          <div class="mount-state-row">
+            <span class="mount-badge mount-badge-disconnected" id="mount-state-badge">Desconectado</span>
+          </div>
+
+          <div class="sec">Rastreamento</div>
+          <div class="trk">
+            <button onclick="setTrk(this,'Sidereal')" data-mode="Sidereal" class="active">Sideral</button>
+            <button onclick="setTrk(this,'Lunar')"    data-mode="Lunar">Lunar</button>
+            <button onclick="setTrk(this,'Solar')"    data-mode="Solar">Solar</button>
+            <button onclick="setTrk(this,'None')"     data-mode="None" class="off-btn">Off</button>
+          </div>
+
+          <div class="sec">GoTo</div>
+          <div class="row">
+            <input class="inp" type="text" id="goto-name" placeholder="Objeto (M42…)" autocomplete="off" autocorrect="off" spellcheck="false"/>
+            <button class="bp bp-p" onclick="doGotoName()">Ir</button>
+          </div>
+          <div class="row">
+            <input class="inp" type="text" id="goto-ra"  placeholder="AR (05h 34m)" autocomplete="off"/>
+            <input class="inp" type="text" id="goto-dec" placeholder="Dec (-05°)" autocomplete="off"/>
+            <button class="bp bp-s" onclick="doGotoCoords()">Ir</button>
+          </div>
+          <div id="goto-status" class="goto-status"></div>
+
+          <div class="mount-actions">
+            <button class="bp-full" onclick="syncMount()">Sync posição atual</button>
+            <button class="bp-full bp-full-sec" onclick="parkMount()">Park</button>
+          </div>
         </div>
-        <div class="joy-wrap">
-          <div class="joy">
-            <div class="jb jb-n" id="jN" onpointerdown="jp('N')" onpointerup="jr('N')"><svg width="14" height="14" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="1,8 6,3 11,8"/></svg></div>
-            <div class="jb jb-s" id="jS" onpointerdown="jp('S')" onpointerup="jr('S')"><svg width="14" height="14" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="1,4 6,9 11,4"/></svg></div>
-            <div class="jb jb-w" id="jW" onpointerdown="jp('W')" onpointerup="jr('W')"><svg width="14" height="14" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="8,1 3,6 8,11"/></svg></div>
-            <div class="jb jb-e" id="jE" onpointerdown="jp('E')" onpointerup="jr('E')"><svg width="14" height="14" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="4,1 9,6 4,11"/></svg></div>
-            <div class="jb jb-stop" onpointerdown="jStop()">STOP</div>
+
+        <!-- Bloco direito / inferior: joystick -->
+        <div class="mount-ctrl">
+          <div class="sec ctrl-sec">Velocidade</div>
+          <!-- RATES em grade 3×2 -->
+          <div class="rates" id="rates-bar">
+            <div class="rb" onclick="setRate(this,1)">1×</div>
+            <div class="rb" onclick="setRate(this,2)">2×</div>
+            <div class="rb" onclick="setRate(this,8)">8×</div>
+            <div class="rb active" onclick="setRate(this,16)">16×</div>
+            <div class="rb" onclick="setRate(this,64)">64×</div>
+            <div class="rb" onclick="setRate(this,0)">Máx</div>
+          </div>
+          <div class="joy-wrap">
+            <div class="joy">
+              <div class="jb jb-n" id="jN" onpointerdown="jp('N')" onpointerup="jr('N')" onpointercancel="jr('N')"><svg width="14" height="14" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="1,8 6,3 11,8"/></svg></div>
+              <div class="jb jb-s" id="jS" onpointerdown="jp('S')" onpointerup="jr('S')" onpointercancel="jr('S')"><svg width="14" height="14" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="1,4 6,9 11,4"/></svg></div>
+              <div class="jb jb-w" id="jW" onpointerdown="jp('W')" onpointerup="jr('W')" onpointercancel="jr('W')"><svg width="14" height="14" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="8,1 3,6 8,11"/></svg></div>
+              <div class="jb jb-e" id="jE" onpointerdown="jp('E')" onpointerup="jr('E')" onpointercancel="jr('E')"><svg width="14" height="14" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="4,1 9,6 4,11"/></svg></div>
+              <div class="jb jb-stop" onpointerdown="jStop()">STOP</div>
+            </div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- ═══════════════════════════════ ALINHAMENTO POLAR ═══════════════════════════════ -->
+    <!-- ══════════ ALINHAMENTO POLAR ══════════ -->
     <div id="p-align" class="panel">
 
-      <!-- Dados GPS (topo em smartphone) -->
+      <!-- Barra de painel com fullscreen -->
+      <div class="panel-bar">
+        <span class="panel-bar-title">Alinhamento polar</span>
+        <button class="bp-fs" onclick="enterFullscreen('p-align')" title="Tela cheia">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M1 5V1h4M9 1h4v4M13 9v4H9M5 13H1V9"/></svg>
+        </button>
+      </div>
+
       <div class="align-gps-row">
-        <div class="card align-gps-card">
-          <div class="clabel">Latitude</div>
-          <div class="cval small" id="a-lat">--</div>
-        </div>
-        <div class="card align-gps-card">
-          <div class="clabel">Decl. mag.</div>
-          <div class="cval small" id="a-decmag">--</div>
-        </div>
-        <div class="card align-gps-card">
-          <div class="clabel">Norte real</div>
-          <div class="cval small" id="a-north">--</div>
-        </div>
-        <div class="card align-gps-card">
-          <div class="clabel">Satélites</div>
-          <div class="cval small" id="a-sats">--</div>
-        </div>
+        <div class="card align-gps-card"><div class="clabel">Latitude</div><div class="cval small" id="a-lat">--</div></div>
+        <div class="card align-gps-card"><div class="clabel">Decl. mag.</div><div class="cval small" id="a-decmag">--</div></div>
+        <div class="card align-gps-card"><div class="clabel">Norte real</div><div class="cval small" id="a-north">--</div></div>
+        <div class="card align-gps-card"><div class="clabel">Satélites</div><div class="cval small" id="a-sats">--</div></div>
       </div>
 
-      <!-- Sensor status banner -->
       <div class="sensor-banner" id="sensor-banner">
-        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.3"><circle cx="7" cy="7" r="5"/><line x1="7" y1="4" x2="7" y2="7.5"/><circle cx="7" cy="9.5" r="0.7" fill="currentColor" stroke="none"/></svg>
-        <span id="sensor-banner-txt">Aguardando Python bridge na porta 8765…</span>
+        <svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.3"><circle cx="7" cy="7" r="5"/><line x1="7" y1="4" x2="7" y2="7.5"/><circle cx="7" cy="9.5" r="0.7" fill="currentColor" stroke="none"/></svg>
+        <span id="sensor-banner-txt">Aguardando Python bridge :8765…</span>
       </div>
 
-      <!-- Visualizações: layout adaptativo -->
-      <div class="align-visuals">
+      <!-- Grade simplificada: barra de latitude + nível 2D + feedback -->
+      <div class="align-grid">
 
-        <!-- Coluna esquerda: barras de precisão -->
-        <div class="align-bars-col">
+        <!-- Barra vertical latitude -->
+        <div class="vis-box align-lat-box">
+          <div class="vis-t">Inclinação polar (Pitch)</div>
+          <canvas id="cv-bar-lat" width="28" height="160"></canvas>
+          <div class="bar-val" id="lat-bar-val">--</div>
+        </div>
 
-          <!-- Barra vertical: latitude -->
-          <div class="vis-box align-bar-v">
-            <div class="vis-t">Latitude</div>
-            <canvas id="cv-bar-lat" width="32" height="180"></canvas>
-            <div class="bar-val" id="lat-bar-val">--</div>
-          </div>
-
-          <!-- Barra horizontal: declinação -->
-          <div class="vis-box align-bar-h">
-            <div class="vis-t" style="width:100%">Declinação magnética</div>
-            <canvas id="cv-bar-dec" width="180" height="32"></canvas>
-            <div class="bar-val" id="dec-bar-val">--</div>
-          </div>
-
-          <!-- Nível 2D -->
-          <div class="vis-box align-nivel">
-            <div class="vis-t" style="width:100%">Nível do tripé</div>
-            <div class="nivel-inner">
-              <canvas id="cv-nivel" width="100" height="100"></canvas>
-              <div class="nivel-info">
-                <div class="nivel-row">Pitch: <span id="pitch-val">--</span></div>
-                <div class="nivel-row">Roll: <span id="roll-val">--</span></div>
-                <div id="nivel-status" class="nivel-status">--</div>
-              </div>
+        <!-- Nível 2D — peça central -->
+        <div class="vis-box align-nivel-box">
+          <div class="vis-t">Nível do tripé</div>
+          <div class="nivel-inner">
+            <canvas id="cv-nivel" width="96" height="96"></canvas>
+            <div class="nivel-info">
+              <div class="nivel-row">Pitch: <span id="pitch-val">--</span></div>
+              <div class="nivel-row">Roll: <span id="roll-val">--</span></div>
+              <div id="nivel-status" class="nivel-status">--</div>
             </div>
           </div>
         </div>
 
-        <!-- Coluna direita: bússola + feedback -->
-        <div class="align-compass-col">
-          <div class="vis-box" style="align-items:center">
-            <div class="vis-t" style="width:100%">Bússola polar</div>
-            <canvas id="cv-compass" width="200" height="200"></canvas>
-          </div>
-
-          <!-- Feedback de alinhamento -->
-          <div class="fb" id="a-fb">
-            <div class="fb-dot" id="a-dot" style="background:var(--dim)"></div>
-            <div class="fb-txt" id="a-txt">Aguardando sensores…</div>
-          </div>
+        <!-- Feedback de alinhamento -->
+        <div class="fb align-fb-box" id="a-fb">
+          <div class="fb-dot" id="a-dot"></div>
+          <div class="fb-txt" id="a-txt">Aguardando sensores…</div>
         </div>
+
       </div>
+
+      <!-- Canvas mantidos no DOM mas ocultos — alignment.js ainda os referencia -->
+      <canvas id="cv-bar-dec"  width="1" height="1" style="display:none"></canvas>
+      <canvas id="cv-compass"  width="1" height="1" style="display:none"></canvas>
+      <span   id="dec-bar-val"                      style="display:none"></span>
     </div>
 
-    <!-- ═══════════════════════════════ KSTARS ═══════════════════════════════ -->
-    <div id="p-kstars" class="novnc-panel">
+    <!-- ══════════ KSTARS ══════════ -->
+    <div id="p-kstars" class="panel panel-vnc">
       <div class="novnc-bar">
-        <div style="display:flex;align-items:center;gap:10px">
+        <div class="novnc-bar-left">
           <span class="novnc-title">KStars / Ekos</span>
           <span class="badge badge-green" id="vnc-k-status">Desconectado</span>
         </div>
-        <button class="bp bp-s sm" onclick="connectVNC('vnc-k-frame','vnc-k-status',6080)">Conectar</button>
+        <div class="novnc-bar-right">
+          <button class="bp bp-s sm" onclick="requestFullscreenPanel('vnc-k-frame')">⛶ Tela cheia</button>
+          <button class="bp bp-p sm" onclick="connectVNC('vnc-k-frame','vnc-k-status',6080)">Conectar</button>
+        </div>
+      </div>
+      <!-- Aviso de rotação em portrait -->
+      <div class="rotate-hint" id="rotate-kstars">
+        <div class="rotate-hint-inner">
+          <svg width="48" height="48" viewBox="0 0 48 48" fill="none" stroke="#5DCAA5" stroke-width="1.5"><rect x="4" y="10" width="40" height="28" rx="3"/><line x1="4" y1="20" x2="44" y2="20"/><circle cx="10" cy="15" r="2" fill="#5DCAA5"/><circle cx="16" cy="15" r="2" fill="#5DCAA5"/></svg>
+          <p>Gire o dispositivo para paisagem</p>
+          <p class="rotate-sub">KStars requer modo horizontal</p>
+          <button class="bp bp-p" style="margin-top:12px" onclick="connectVNC('vnc-k-frame','vnc-k-status',6080)">Conectar assim mesmo</button>
+        </div>
       </div>
       <div class="novnc-frame" id="vnc-k-frame">
         <div class="nvph">
-          <svg width="44" height="44" viewBox="0 0 44 44" fill="none" stroke="#374151" stroke-width="1.5"><rect x="3" y="7" width="38" height="26" rx="2.5"/><line x1="3" y1="15" x2="41" y2="15"/><circle cx="7" cy="11" r="1.5" fill="#374151"/><circle cx="12" cy="11" r="1.5" fill="#374151"/><line x1="16" y1="37" x2="28" y2="37"/><line x1="22" y1="33" x2="22" y2="37"/></svg>
+          <svg width="40" height="40" viewBox="0 0 44 44" fill="none" stroke="#374151" stroke-width="1.5"><rect x="3" y="7" width="38" height="26" rx="2.5"/><line x1="3" y1="15" x2="41" y2="15"/><circle cx="7" cy="11" r="1.5" fill="#374151"/><circle cx="12" cy="11" r="1.5" fill="#374151"/><line x1="16" y1="37" x2="28" y2="37"/><line x1="22" y1="33" x2="22" y2="37"/></svg>
           <p>KStars / Ekos</p>
           <p class="nvph-sub">astropi.local:6080</p>
-          <button class="bp bp-p nvph-btn" onclick="connectVNC('vnc-k-frame','vnc-k-status',6080)">Conectar ao KStars</button>
+          <button class="bp bp-p nvph-btn" onclick="connectVNC('vnc-k-frame','vnc-k-status',6080)">Conectar</button>
         </div>
       </div>
     </div>
 
-    <!-- ═══════════════════════════════ PHD2 ═══════════════════════════════ -->
-    <div id="p-phd2" class="novnc-panel">
+    <!-- ══════════ PHD2 ══════════ -->
+    <div id="p-phd2" class="panel panel-vnc">
       <div class="novnc-bar">
-        <div style="display:flex;align-items:center;gap:10px">
+        <div class="novnc-bar-left">
           <span class="novnc-title">PHD2 Guiding</span>
           <span class="badge badge-amber" id="vnc-p-status">Desconectado</span>
         </div>
-        <button class="bp bp-s sm" onclick="connectVNC('vnc-p-frame','vnc-p-status',6081)">Conectar</button>
+        <div class="novnc-bar-right">
+          <button class="bp bp-s sm" onclick="requestFullscreenPanel('vnc-p-frame')">⛶ Tela cheia</button>
+          <button class="bp sm" style="background:#633806;color:#FAC775" onclick="connectVNC('vnc-p-frame','vnc-p-status',6081)">Conectar</button>
+        </div>
+      </div>
+      <div class="rotate-hint" id="rotate-phd2">
+        <div class="rotate-hint-inner">
+          <svg width="48" height="48" viewBox="0 0 48 48" fill="none" stroke="#EF9F27" stroke-width="1.5"><polyline points="2,36 10,22 18,30 26,14 34,24 42,18"/><circle cx="26" cy="14" r="3" fill="#EF9F27" stroke="none"/></svg>
+          <p>Gire o dispositivo para paisagem</p>
+          <p class="rotate-sub">PHD2 requer modo horizontal</p>
+          <button class="bp sm" style="background:#633806;color:#FAC775;margin-top:12px" onclick="connectVNC('vnc-p-frame','vnc-p-status',6081)">Conectar assim mesmo</button>
+        </div>
       </div>
       <div class="novnc-frame" id="vnc-p-frame">
         <div class="nvph">
-          <svg width="44" height="44" viewBox="0 0 44 44" fill="none" stroke="#374151" stroke-width="1.5"><polyline points="2,32 8,20 14,26 20,14 26,22 32,16 42,28"/><circle cx="20" cy="14" r="3" stroke="#EF9F27"/></svg>
+          <svg width="40" height="40" viewBox="0 0 44 44" fill="none" stroke="#374151" stroke-width="1.5"><polyline points="2,32 8,20 14,26 20,14 26,22 32,16 42,28"/><circle cx="20" cy="14" r="3" stroke="#EF9F27"/></svg>
           <p>PHD2 Guiding</p>
           <p class="nvph-sub">astropi.local:6081</p>
-          <button class="bp nvph-btn" style="background:#633806;color:#FAC775" onclick="connectVNC('vnc-p-frame','vnc-p-status',6081)">Conectar ao PHD2</button>
+          <button class="bp nvph-btn" style="background:#633806;color:#FAC775" onclick="connectVNC('vnc-p-frame','vnc-p-status',6081)">Conectar</button>
         </div>
       </div>
     </div>
 
-    <!-- ═══════════════════════════════ DESKTOP ═══════════════════════════════ -->
-    <div id="p-desktop" class="novnc-panel">
+    <!-- ══════════ DESKTOP ══════════ -->
+    <div id="p-desktop" class="panel panel-vnc">
       <div class="novnc-bar">
-        <div style="display:flex;align-items:center;gap:10px">
+        <div class="novnc-bar-left">
           <span class="novnc-title">Desktop XFCE</span>
           <span class="badge badge-purple" id="vnc-d-status">Desconectado</span>
         </div>
-        <button class="bp bp-s sm" onclick="showAuth('desktop')">Conectar</button>
-      </div>
-      <div class="novnc-frame" id="vnc-d-frame" style="position:relative">
-        <!-- Aviso de orientação (só aparece em portrait via CSS) -->
-        <div class="landscape-hint">
-          <svg width="36" height="36" viewBox="0 0 36 36" fill="none" stroke="#374151" stroke-width="1.5"><rect x="2" y="8" width="20" height="28" rx="2" transform="rotate(-90 11 18)"/><line x1="28" y1="18" x2="34" y2="18"/><polyline points="31,15 34,18 31,21"/></svg>
-          <p>Gire o dispositivo para paisagem para usar o desktop remoto.</p>
+        <div class="novnc-bar-right">
+          <button class="bp bp-s sm" onclick="requestFullscreenPanel('vnc-d-frame')">⛶ Tela cheia</button>
+          <button class="bp bp-s sm" onclick="showAuth('desktop')">Conectar</button>
         </div>
+      </div>
+      <div class="rotate-hint" id="rotate-desktop">
+        <div class="rotate-hint-inner">
+          <svg width="48" height="48" viewBox="0 0 48 48" fill="none" stroke="#AFA9EC" stroke-width="1.5"><rect x="4" y="10" width="40" height="28" rx="3"/><line x1="4" y1="20" x2="44" y2="20"/><circle cx="10" cy="15" r="2" fill="#AFA9EC"/><circle cx="16" cy="15" r="2" fill="#AFA9EC"/></svg>
+          <p>Gire o dispositivo para paisagem</p>
+          <p class="rotate-sub">Desktop requer modo horizontal</p>
+          <button class="bp bp-s sm" style="margin-top:12px" onclick="showAuth('desktop')">Conectar assim mesmo</button>
+        </div>
+      </div>
+      <div class="novnc-frame" id="vnc-d-frame">
         <div class="auth-box" id="auth-desktop">
-          <svg width="32" height="32" viewBox="0 0 32 32" fill="none" stroke="#374151" stroke-width="1.5" style="margin:0 auto 10px;display:block"><rect x="2" y="4" width="28" height="20" rx="2"/><line x1="2" y1="11" x2="30" y2="11"/><line x1="10" y1="28" x2="22" y2="28"/><line x1="16" y1="24" x2="16" y2="28"/></svg>
+          <svg width="28" height="28" viewBox="0 0 32 32" fill="none" stroke="#374151" stroke-width="1.5" style="margin:0 auto 10px;display:block"><rect x="2" y="4" width="28" height="20" rx="2"/><line x1="2" y1="11" x2="30" y2="11"/><line x1="10" y1="28" x2="22" y2="28"/><line x1="16" y1="24" x2="16" y2="28"/></svg>
           <h3>Desktop XFCE</h3>
           <p>astropi.local:6082</p>
           <input class="auth-inp" type="password" id="pwd-desktop" placeholder="Senha VNC" onkeydown="if(event.key==='Enter')doAuth('desktop')"/>
@@ -271,18 +296,21 @@
       </div>
     </div>
 
-    <!-- ═══════════════════════════════ TERMINAL ═══════════════════════════════ -->
-    <div id="p-terminal" class="novnc-panel">
+    <!-- ══════════ TERMINAL ══════════ -->
+    <div id="p-terminal" class="panel panel-vnc">
       <div class="novnc-bar">
-        <div style="display:flex;align-items:center;gap:10px">
-          <span class="novnc-title">Terminal</span>
+        <div class="novnc-bar-left">
+          <span class="novnc-title">Terminal SSH</span>
           <span class="badge badge-green" id="term-status">Desconectado</span>
         </div>
-        <button class="bp bp-s sm" onclick="showAuth('terminal')">Conectar</button>
+        <div class="novnc-bar-right">
+          <button class="bp bp-s sm" onclick="requestFullscreenPanel('term-frame')">⛶ Tela cheia</button>
+          <button class="bp bp-s sm" onclick="showAuth('terminal')">Conectar</button>
+        </div>
       </div>
       <div class="novnc-frame" id="term-frame">
         <div class="auth-box" id="auth-terminal">
-          <svg width="32" height="32" viewBox="0 0 32 32" fill="none" stroke="#374151" stroke-width="1.5" style="margin:0 auto 10px;display:block"><rect x="2" y="4" width="28" height="24" rx="2"/><polyline points="6,12 10,16 6,20"/><line x1="12" y1="20" x2="26" y2="20"/></svg>
+          <svg width="28" height="28" viewBox="0 0 32 32" fill="none" stroke="#374151" stroke-width="1.5" style="margin:0 auto 10px;display:block"><rect x="2" y="4" width="28" height="24" rx="2"/><polyline points="6,12 10,16 6,20"/><line x1="12" y1="20" x2="26" y2="20"/></svg>
           <h3>Terminal SSH</h3>
           <p>astropi.local:7681</p>
           <input class="auth-inp" type="text"     id="user-terminal" placeholder="Usuário" value="samu192" autocomplete="username"/>
@@ -293,59 +321,67 @@
       </div>
     </div>
 
-    <!-- ═══════════════════════════════ DRIVERS ═══════════════════════════════ -->
-    <div id="p-drivers" class="panel">
-      <div class="col" style="width:100%">
-        <div class="sec" style="margin-top:0">Dispositivos INDI</div>
-        <div class="drv-row"><span class="dot dx" id="dot-mount"></span><div style="flex:1"><div class="drv-name">Montagem equatorial 3D</div><div class="drv-sub">EQMod · /dev/ttyUSB0</div></div><div class="tog" id="tog-mount" onclick="toggleDriver('mount')"></div></div>
-        <div class="drv-row"><span class="dot dx" id="dot-camera"></span><div style="flex:1"><div class="drv-name">Canon EOS (DSLR)</div><div class="drv-sub">indi_canon_ccd · USB</div></div><div class="tog" id="tog-camera" onclick="toggleDriver('camera')"></div></div>
-        <div class="drv-row"><span class="dot dx" id="dot-focuser"></span><div style="flex:1"><div class="drv-name">Focalizador eletrônico</div><div class="drv-sub">indi_moonlite · /dev/ttyUSB1</div></div><div class="tog" id="tog-focuser" onclick="toggleDriver('focuser')"></div></div>
-        <div class="drv-row"><span class="dot dx" id="dot-filterwheel"></span><div style="flex:1"><div class="drv-name">Roda de filtros</div><div class="drv-sub">indi_efw</div></div><div class="tog" id="tog-filterwheel" onclick="toggleDriver('filterwheel')"></div></div>
-        <div class="drv-row"><span class="dot dx" id="dot-rotator"></span><div style="flex:1"><div class="drv-name">Rotacionador de campo</div><div class="drv-sub">Sem driver selecionado</div></div><div class="tog" id="tog-rotator" onclick="toggleDriver('rotator')"></div></div>
-        <div class="drv-row"><span class="dot dx" id="dot-gps"></span><div style="flex:1"><div class="drv-name">GPS M8N + Compass</div><div class="drv-sub">NMEA · /dev/ttyAMA0</div></div><div class="tog" id="tog-gps" onclick="toggleDriver('gps')"></div></div>
-        <div class="drv-row"><span class="dot dx" id="dot-adxl"></span><div style="flex:1"><div class="drv-name">ADXL345 (acelerômetro)</div><div class="drv-sub">SPI · Python bridge :8765</div></div><div class="tog" id="tog-adxl" onclick="toggleDriver('adxl')"></div></div>
-        <div class="log" id="indi-log">
-          <div><span class="dim">[--]</span> Aguardando conexão…</div>
-        </div>
+    <!-- ══════════ DRIVERS ══════════ -->
+    <div id="p-drivers" class="panel panel-scroll">
+      <div class="panel-bar panel-bar-scroll">
+        <span class="panel-bar-title">Drivers INDI</span>
+        <button class="bp-fs" onclick="enterFullscreen('p-drivers')" title="Tela cheia">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M1 5V1h4M9 1h4v4M13 9v4H9M5 13H1V9"/></svg>
+        </button>
       </div>
+      <div class="sec">Dispositivos INDI</div>
+      <div class="drv-row"><span class="dot dx" id="dot-mount"></span><div class="drv-txt"><div class="drv-name">Montagem equatorial 3D</div><div class="drv-sub">EQMod · /dev/ttyUSB0</div></div><div class="tog" id="tog-mount" onclick="toggleDriver('mount')"></div></div>
+      <div class="drv-row"><span class="dot dx" id="dot-camera"></span><div class="drv-txt"><div class="drv-name">Canon EOS (DSLR)</div><div class="drv-sub">indi_canon_ccd · USB</div></div><div class="tog" id="tog-camera" onclick="toggleDriver('camera')"></div></div>
+      <div class="drv-row"><span class="dot dx" id="dot-focuser"></span><div class="drv-txt"><div class="drv-name">Focalizador eletrônico</div><div class="drv-sub">indi_moonlite · /dev/ttyUSB1</div></div><div class="tog" id="tog-focuser" onclick="toggleDriver('focuser')"></div></div>
+      <div class="drv-row"><span class="dot dx" id="dot-filterwheel"></span><div class="drv-txt"><div class="drv-name">Roda de filtros</div><div class="drv-sub">indi_efw</div></div><div class="tog" id="tog-filterwheel" onclick="toggleDriver('filterwheel')"></div></div>
+      <div class="drv-row"><span class="dot dx" id="dot-rotator"></span><div class="drv-txt"><div class="drv-name">Rotacionador de campo</div><div class="drv-sub">Sem driver</div></div><div class="tog" id="tog-rotator" onclick="toggleDriver('rotator')"></div></div>
+      <div class="drv-row"><span class="dot dx" id="dot-gps"></span><div class="drv-txt"><div class="drv-name">GPS M8N + Compass</div><div class="drv-sub">NMEA · /dev/ttyAMA0</div></div><div class="tog" id="tog-gps" onclick="toggleDriver('gps')"></div></div>
+      <div class="drv-row"><span class="dot dx" id="dot-adxl"></span><div class="drv-txt"><div class="drv-name">ADXL345 (acelerômetro)</div><div class="drv-sub">SPI · Python bridge :8765</div></div><div class="tog" id="tog-adxl" onclick="toggleDriver('adxl')"></div></div>
+      <div class="log" id="indi-log"><div><span class="dim">[--]</span> Aguardando conexão…</div></div>
     </div>
 
-    <!-- ═══════════════════════════════ REDE ═══════════════════════════════ -->
-    <div id="p-network" class="panel">
-      <div class="col" style="width:100%">
-        <div class="sec" style="margin-top:0">Status</div>
-        <div class="net-grid">
-          <div class="net-card"><div class="net-label">Modo</div><div class="net-val" id="net-mode">--</div></div>
-          <div class="net-card"><div class="net-label">IP</div><div class="net-val" id="net-ip">--</div></div>
-          <div class="net-card"><div class="net-label">Rede WiFi</div><div class="net-val" id="net-ssid">--</div></div>
-          <div class="net-card"><div class="net-label">Sinal</div><div class="net-val" id="net-signal">--</div></div>
-        </div>
-        <div class="sec">Access Point</div>
-        <div class="ap-toggle-row">
-          <div>
-            <div style="font-size:12px;color:var(--text)">AstroPi AP</div>
-            <div class="ap-sub" id="ap-sub">Verificando…</div>
-          </div>
-          <div class="tog" id="ap-tog" onclick="toggleAP()"></div>
-        </div>
-        <div class="net-grid" id="ap-info" style="opacity:0.3">
-          <div class="net-card"><div class="net-label">SSID</div><div class="net-val">AstroPi</div></div>
-          <div class="net-card"><div class="net-label">IP AP</div><div class="net-val">10.0.0.1</div></div>
-          <div class="net-card"><div class="net-label">Canal</div><div class="net-val">6 · 2.4 GHz</div></div>
-          <div class="net-card"><div class="net-label">Clientes</div><div class="net-val" id="ap-clients">0</div></div>
-        </div>
-        <div class="sec">Serviços</div>
-        <div class="drv-row"><span class="dot dx" id="svc-dot-indiweb"></span><div style="flex:1"><div class="drv-name">INDI Web Manager</div><div class="drv-sub">:8624</div></div><a href="http://astropi.local:8624" target="_blank" class="bp bp-s sm">Abrir</a></div>
-        <div class="drv-row"><span class="dot dx" id="svc-dot-kstars"></span><div style="flex:1"><div class="drv-name">noVNC · KStars</div><div class="drv-sub">:6080</div></div></div>
-        <div class="drv-row"><span class="dot dx" id="svc-dot-phd2"></span><div style="flex:1"><div class="drv-name">noVNC · PHD2</div><div class="drv-sub">:6081</div></div></div>
-        <div class="drv-row"><span class="dot dx" id="svc-dot-desktop"></span><div style="flex:1"><div class="drv-name">noVNC · Desktop XFCE</div><div class="drv-sub">:6082</div></div></div>
-        <div class="drv-row"><span class="dot dx" id="svc-dot-ttyd"></span><div style="flex:1"><div class="drv-name">ttyd · Terminal</div><div class="drv-sub">:7681</div></div></div>
-        <div class="drv-row"><span class="dot dx" id="svc-dot-gpsd"></span><div style="flex:1"><div class="drv-name">gpsd</div><div class="drv-sub">:2947</div></div></div>
-        <div class="drv-row"><span class="dot dx" id="svc-dot-bridge"></span><div style="flex:1"><div class="drv-name">Node.js bridge</div><div class="drv-sub">:3000</div></div></div>
+    <!-- ══════════ REDE ══════════ -->
+    <div id="p-network" class="panel panel-scroll">
+      <div class="panel-bar panel-bar-scroll">
+        <span class="panel-bar-title">Rede</span>
+        <button class="bp-fs" onclick="enterFullscreen('p-network')" title="Tela cheia">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M1 5V1h4M9 1h4v4M13 9v4H9M5 13H1V9"/></svg>
+        </button>
       </div>
+      <div class="sec">Status de rede</div>
+      <div class="net-grid">
+        <div class="net-card"><div class="net-label">Modo</div><div class="net-val" id="net-mode">--</div></div>
+        <div class="net-card"><div class="net-label">IP</div><div class="net-val" id="net-ip">--</div></div>
+        <div class="net-card"><div class="net-label">Rede WiFi</div><div class="net-val" id="net-ssid">--</div></div>
+        <div class="net-card"><div class="net-label">Sinal</div><div class="net-val" id="net-signal">--</div></div>
+      </div>
+
+      <div class="sec">Access Point</div>
+      <div class="ap-row">
+        <div>
+          <div class="ap-title">AstroPi AP</div>
+          <div class="ap-sub" id="ap-sub">Verificando…</div>
+        </div>
+        <div class="tog" id="ap-tog" onclick="toggleAP()"></div>
+      </div>
+      <div class="net-grid ap-detail" id="ap-info">
+        <div class="net-card"><div class="net-label">SSID</div><div class="net-val">AstroPi</div></div>
+        <div class="net-card"><div class="net-label">IP AP</div><div class="net-val">10.0.0.1</div></div>
+        <div class="net-card"><div class="net-label">Canal</div><div class="net-val">6 · 2.4 GHz</div></div>
+        <div class="net-card"><div class="net-label">Clientes</div><div class="net-val" id="ap-clients">0</div></div>
+      </div>
+
+      <div class="sec">Serviços</div>
+      <div class="drv-row"><span class="dot dx" id="svc-dot-indiweb"></span><div class="drv-txt"><div class="drv-name">INDI Web Manager</div><div class="drv-sub">:8624</div></div><a href="http://astropi.local:8624" target="_blank" class="bp bp-s sm">Abrir</a></div>
+      <div class="drv-row"><span class="dot dx" id="svc-dot-kstars"></span><div class="drv-txt"><div class="drv-name">noVNC · KStars</div><div class="drv-sub">:6080</div></div></div>
+      <div class="drv-row"><span class="dot dx" id="svc-dot-phd2"></span><div class="drv-txt"><div class="drv-name">noVNC · PHD2</div><div class="drv-sub">:6081</div></div></div>
+      <div class="drv-row"><span class="dot dx" id="svc-dot-desktop"></span><div class="drv-txt"><div class="drv-name">noVNC · Desktop XFCE</div><div class="drv-sub">:6082</div></div></div>
+      <div class="drv-row"><span class="dot dx" id="svc-dot-ttyd"></span><div class="drv-txt"><div class="drv-name">ttyd · Terminal</div><div class="drv-sub">:7681</div></div></div>
+      <div class="drv-row"><span class="dot dx" id="svc-dot-gpsd"></span><div class="drv-txt"><div class="drv-name">gpsd</div><div class="drv-sub">:2947</div></div></div>
+      <div class="drv-row"><span class="dot dx" id="svc-dot-bridge"></span><div class="drv-txt"><div class="drv-name">Node.js bridge</div><div class="drv-sub">:3000</div></div></div>
     </div>
 
-  </div><!-- /body -->
+  </main><!-- /content -->
 
   <script src="alignment.js"></script>
   <script src="app.js"></script>

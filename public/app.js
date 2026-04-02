@@ -1,10 +1,10 @@
 /**
- * AstroControl — app.js  (production)
- *
+ * AstroControl — app.js
  * Estado central → render via rAF
  * WebSocket com backoff e heartbeat
  * Fila de comandos offline
  * Auth segura do terminal via POST
+ * Fullscreen para abas noVNC
  */
 
 'use strict';
@@ -34,7 +34,6 @@ const STATE = {
   logs:        [],
 };
 
-/* Render agendado */
 let rafPending = false;
 
 function setState(patch) {
@@ -54,10 +53,7 @@ function deepMerge(target, src) {
 }
 
 function scheduleRender() {
-  if (!rafPending) {
-    rafPending = true;
-    requestAnimationFrame(render);
-  }
+  if (!rafPending) { rafPending = true; requestAnimationFrame(render); }
 }
 
 /* ══════════════════════════════════════════════
@@ -67,7 +63,6 @@ function scheduleRender() {
 function render() {
   rafPending = false;
 
-  /* Status dots topbar */
   setDot('pi',   STATE.wsConnected);
   setDot('indi', STATE.indiConnected);
   setDot('gps',  STATE.devices.gps.fix, !STATE.devices.gps.fix && STATE.devices.gps.sats > 0);
@@ -87,7 +82,6 @@ function renderMount() {
   setText('m-alt', m.alt != null ? m.alt + '°' : '--');
   setText('m-az',  m.az  != null ? m.az  + '°' : '--');
 
-  /* Badge de estado */
   const badge = $('mount-state-badge');
   if (badge) {
     const labels = {
@@ -99,20 +93,14 @@ function renderMount() {
     badge.className   = 'mount-badge mount-badge-' + (m.state || 'disconnected');
   }
 
-  /* Botões de tracking */
   document.querySelectorAll('.trk button').forEach(b => {
     b.classList.toggle('active', b.dataset.mode === STATE.tracking);
   });
 }
 
 function renderDrivers() {
-  const DRIVER_KEYS = {
-    mount:'indi_eqmod_telescope', camera:'indi_canon_ccd',
-    focuser:'indi_moonlite', filterwheel:'indi_efw',
-    rotator:'indi_simulator_rotator', gps:'indi_gpsd',
-  };
-
-  Object.entries(DRIVER_KEYS).forEach(([key]) => {
+  const KEYS = ['mount','camera','focuser','filterwheel','rotator','gps'];
+  KEYS.forEach(key => {
     const dev = STATE.devices[key];
     if (!dev) return;
     const dot = $('dot-' + key);
@@ -122,12 +110,11 @@ function renderDrivers() {
     if (tog) tog.classList.toggle('on', dev.connected);
   });
 
-  /* Log */
   const logEl = $('indi-log');
   if (logEl && logEl.dataset.logLen !== String(STATE.logs.length)) {
     const frag = document.createDocumentFragment();
     STATE.logs.forEach(({ level, text }) => {
-      const div  = document.createElement('div');
+      const div = document.createElement('div');
       const span = document.createElement('span');
       span.className   = level;
       span.textContent = level === 'ok' ? '[OK]' : level === 'er' ? '[ER]' : level === 'wn' ? '[--]' : '[..]';
@@ -149,14 +136,14 @@ function renderNetwork() {
   setText('net-ssid',   n.ssid);
   setText('net-signal', n.signal);
 
-  const tog = $('ap-tog');
-  const sub = $('ap-sub');
-  const inf = $('ap-info');
+  const tog    = $('ap-tog');
+  const sub    = $('ap-sub');
+  const detail = $('ap-info');
   if (tog) tog.classList.toggle('on', n.ap_active);
   if (sub) sub.textContent = n.ap_active
     ? `Ativo · AstroPi · ${n.ap_clients} cliente(s)`
     : 'Desativado · sobe automaticamente sem WiFi';
-  if (inf) inf.style.opacity = n.ap_active ? '1' : '0.3';
+  if (detail) detail.classList.toggle('visible', n.ap_active);
   setText('ap-clients', String(n.ap_clients));
 
   Object.entries(n.services || {}).forEach(([k, up]) => {
@@ -189,12 +176,12 @@ const WS_HOST = window.location.hostname || 'astropi.local';
 const WS_PORT = parseInt(window.location.port) || 3000;
 const WS_URL  = `ws://${WS_HOST}:${WS_PORT}/ws`;
 
-let ws         = null;
-let wsBackoff  = 1000;
-let wsTimer    = null;
-let wsAlive    = false;
-let hbTimer    = null;
-const CMD_QUEUE = [];
+let ws        = null;
+let wsBackoff = 1000;
+let wsTimer   = null;
+let wsAlive   = false;
+let hbTimer   = null;
+const CMD_Q   = [];
 
 function connectWS() {
   clearTimeout(wsTimer);
@@ -207,69 +194,53 @@ function connectWS() {
   }
 
   ws.onopen = () => {
-    wsBackoff = 1000;
-    wsAlive   = true;
+    wsBackoff = 1000; wsAlive = true;
     setState({ wsConnected: true });
-    startHeartbeat();
-    flushCmdQueue();
-    sendWS({ type: 'get_state' });
-    sendWS({ type: 'network_status' });
-    addLog('ok', 'Bridge conectado');
+    startHB(); flushQ();
+    sendWS({ type:'get_state' });
+    sendWS({ type:'network_status' });
+    addLog('ok','Bridge conectado');
   };
 
-  ws.onmessage = (evt) => {
-    try { handleServerMsg(JSON.parse(evt.data)); } catch {}
-  };
-
-  ws.onerror = () => {};
-
-  ws.onclose = () => {
-    stopHeartbeat();
-    setState({ wsConnected: false, indiConnected: false });
-    addLog('wn', `Offline — reconecta em ${Math.round(wsBackoff / 1000)}s`);
+  ws.onmessage = (evt) => { try { handleMsg(JSON.parse(evt.data)); } catch {} };
+  ws.onerror   = () => {};
+  ws.onclose   = () => {
+    stopHB();
+    setState({ wsConnected:false, indiConnected:false });
     wsTimer = setTimeout(connectWS, wsBackoff);
     wsBackoff = Math.min(wsBackoff * 1.5, 30000);
   };
 }
 
 function sendWS(msg) {
-  if (ws && ws.readyState === WebSocket.OPEN) {
-    ws.send(JSON.stringify(msg));
-    return true;
-  }
+  if (ws && ws.readyState === WebSocket.OPEN) { ws.send(JSON.stringify(msg)); return true; }
   return false;
 }
 
-function sendCmd(msg, queueIfOffline = true) {
-  if (!sendWS(msg) && queueIfOffline) {
-    CMD_QUEUE.push(msg);
-    addLog('wn', `Na fila: ${msg.type}`);
+function sendCmd(msg, queue = true) {
+  if (!sendWS(msg) && queue) { CMD_Q.push(msg); addLog('wn','Na fila: ' + msg.type); }
+}
+
+function flushQ() {
+  while (CMD_Q.length && ws && ws.readyState === WebSocket.OPEN) {
+    addLog('ok','Reenviado: ' + CMD_Q[0].type); sendWS(CMD_Q.shift());
   }
 }
 
-function flushCmdQueue() {
-  while (CMD_QUEUE.length > 0 && ws && ws.readyState === WebSocket.OPEN) {
-    addLog('ok', `Reenviado: ${CMD_QUEUE[0].type}`);
-    sendWS(CMD_QUEUE.shift());
-  }
-}
-
-function startHeartbeat() {
-  stopHeartbeat();
+function startHB() {
+  stopHB();
   hbTimer = setInterval(() => {
     if (!wsAlive) { ws && ws.close(); return; }
-    wsAlive = false;
-    sendWS({ type: 'ping', ts: Date.now() });
+    wsAlive = false; sendWS({ type:'ping', ts:Date.now() });
   }, 15000);
 }
-
-function stopHeartbeat() { clearInterval(hbTimer); }
+function stopHB() { clearInterval(hbTimer); }
 
 /* ══════════════════════════════════════════════
    HANDLER DE MENSAGENS DO SERVIDOR
    ══════════════════════════════════════════════ */
 
-function handleServerMsg(msg) {
+function handleMsg(msg) {
   wsAlive = true;
 
   switch (msg.type) {
@@ -282,12 +253,9 @@ function handleServerMsg(msg) {
     case 'device_update':
       if (msg.key && STATE.devices[msg.key]) {
         STATE.devices[msg.key] = { ...STATE.devices[msg.key], ...msg.data };
-        /* Propaga GPS para alignment.js */
         if (msg.key === 'gps' && typeof applyAlignData === 'function') {
-          const gps = STATE.devices.gps;
-          if (gps.lat && gps.lon) {
-            applyAlignData({ lat: gps.lat, lon: gps.lon, fix: gps.fix, sats: gps.sats });
-          }
+          const g = STATE.devices.gps;
+          if (g.lat) applyAlignData({ lat:g.lat, lon:g.lon, fix:g.fix, sats:g.sats });
         }
         scheduleRender();
       }
@@ -305,10 +273,10 @@ function handleServerMsg(msg) {
       break;
 
     case 'driver_status':
-      setState({ indiserver: !!msg.indiserver, drivers: msg.drivers || [] });
+      setState({ indiserver:!!msg.indiserver, drivers:msg.drivers||[] });
       if (msg.drivers) {
         msg.drivers.forEach(d => {
-          const key = driverNameToKey(d.name);
+          const key = driverKey(d.name);
           if (key && STATE.devices[key]) {
             STATE.devices[key].connected = d.connected;
             STATE.devices[key].state     = d.error ? 'error' : d.connected ? 'idle' : 'disconnected';
@@ -319,17 +287,16 @@ function handleServerMsg(msg) {
       break;
 
     case 'goto_result':
-      setState({ gotoStatus: { success: msg.success, message: msg.message } });
-      if (msg.success !== null) setTimeout(() => setState({ gotoStatus: null }), 8000);
+      setState({ gotoStatus:{ success:msg.success, message:msg.message } });
+      if (msg.success !== null) setTimeout(() => setState({ gotoStatus:null }), 8000);
       break;
 
-    case 'network':
-      // eslint-disable-next-line no-unused-vars
-      (function() {
-        const { type: _t, ...net } = msg;
-        setState({ network: net });
-      })();
+    case 'network': {
+      /* Remove msg.type antes de salvar no STATE */
+      const { type:_t, ...net } = msg;
+      setState({ network: net });
       break;
+    }
 
     case 'log':
       addLog(msg.level, msg.text);
@@ -337,21 +304,21 @@ function handleServerMsg(msg) {
   }
 }
 
-function driverNameToKey(name) {
+function driverKey(name) {
   if (!name) return null;
   const n = name.toLowerCase();
-  if (n.includes('eqmod') || n.includes('telescope') || n.includes('mount')) return 'mount';
-  if (n.includes('ccd')   || n.includes('camera')    || n.includes('canon')) return 'camera';
-  if (n.includes('moonlite') || n.includes('focuser'))                        return 'focuser';
-  if (n.includes('efw')   || n.includes('filter'))                            return 'filterwheel';
-  if (n.includes('rotat'))                                                     return 'rotator';
-  if (n.includes('gps'))                                                       return 'gps';
+  if (n.includes('eqmod')||n.includes('telescope')||n.includes('mount')) return 'mount';
+  if (n.includes('ccd')||n.includes('camera')||n.includes('canon'))       return 'camera';
+  if (n.includes('moonlite')||n.includes('focuser'))                       return 'focuser';
+  if (n.includes('efw')||n.includes('filter'))                             return 'filterwheel';
+  if (n.includes('rotat'))                                                  return 'rotator';
+  if (n.includes('gps'))                                                    return 'gps';
   return null;
 }
 
 function addLog(level, text) {
   STATE.logs.push({ level, text });
-  if (STATE.logs.length > 200) STATE.logs.splice(0, STATE.logs.length - 200);
+  if (STATE.logs.length > 200) STATE.logs.splice(0, 100);
   if (STATE.currentTab === 'drivers') scheduleRender();
 }
 
@@ -360,8 +327,7 @@ function addLog(level, text) {
    ══════════════════════════════════════════════ */
 
 const SENSOR_PORT = 8765;
-let sensorWs      = null;
-let sensorBackoff = 2000;
+let sensorWs = null, sensorBackoff = 2000;
 
 function connectSensors() {
   try { sensorWs = new WebSocket(`ws://${WS_HOST}:${SENSOR_PORT}`); }
@@ -369,16 +335,15 @@ function connectSensors() {
 
   sensorWs.onopen = () => {
     sensorBackoff = 2000;
-    setDot('gps', false, true); /* amarelo = conectado mas sem fix ainda */
+    setDot('gps', false, true);
     if (typeof updateSensorBanner === 'function') updateSensorBanner(true);
   };
 
   sensorWs.onmessage = (evt) => {
     try {
-      const data = JSON.parse(evt.data);
-      /* data = { pitch, roll, heading, lat, lon, decMag, fix, sats } */
-      if (typeof applyAlignData === 'function') applyAlignData(data);
-      setDot('gps', data.fix, !data.fix && (data.sats || 0) > 0);
+      const d = JSON.parse(evt.data);
+      if (typeof applyAlignData === 'function') applyAlignData(d);
+      setDot('gps', d.fix, !d.fix && (d.sats||0) > 0);
     } catch {}
   };
 
@@ -395,22 +360,117 @@ function connectSensors() {
    ══════════════════════════════════════════════ */
 
 function sw(id, el) {
-  document.querySelectorAll('.panel, .novnc-panel').forEach(p => {
+  /* Esconde todos os painéis */
+  document.querySelectorAll('.panel').forEach(p => {
     p.classList.remove('active');
-    p.style.display = 'none';
   });
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
 
   const panel = $('p-' + id);
-  if (panel) { panel.style.display = 'flex'; panel.classList.add('active'); }
+  if (panel) panel.classList.add('active');
   if (el)    el.classList.add('active');
 
   STATE.currentTab = id;
   scheduleRender();
 
   if (id === 'align')   { if (typeof renderAlign === 'function') renderAlign(); }
-  if (id === 'network') sendCmd({ type: 'network_status' }, false);
-  if (id === 'drivers') sendCmd({ type: 'get_state' }, false);
+  if (id === 'network') sendCmd({ type:'network_status' }, false);
+  if (id === 'drivers') sendCmd({ type:'get_state' },      false);
+}
+
+/* ══════════════════════════════════════════════
+   FULLSCREEN — todas as abas
+   ══════════════════════════════════════════════ */
+
+/**
+ * Tenta fullscreen nativo (oculta barra de endereço).
+ * Se não disponível, cria overlay que cobre toda a tela.
+ *
+ * Para abas noVNC usa o frame existente.
+ * Para abas nativas (mount, align, drivers, network) clona o conteúdo.
+ */
+function enterFullscreen(panelId) {
+  const panel = $(panelId);
+  if (!panel) return;
+
+  /* Tenta Fullscreen API nativa primeiro */
+  const el = panel;
+  const fn = el.requestFullscreen || el.webkitRequestFullscreen || el.mozRequestFullScreen;
+  if (fn) {
+    fn.call(el).catch(() => _showFsOverlay(panelId));
+    return;
+  }
+  _showFsOverlay(panelId);
+}
+
+function _showFsOverlay(panelId) {
+  /* Remove overlay anterior se existir */
+  const prev = document.getElementById('fs-overlay-root');
+  if (prev) prev.remove();
+
+  const panel = $(panelId);
+  if (!panel) return;
+
+  const overlay = document.createElement('div');
+  overlay.id = 'fs-overlay-root';
+  overlay.className = 'fs-overlay';
+
+  /* Botão de saída */
+  const exitBtn = document.createElement('button');
+  exitBtn.className = 'fs-exit-btn';
+  exitBtn.innerHTML = `<svg width="12" height="12" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 1H1v4M9 1h4v4M13 9v4H9M5 13H1V9"/></svg> Sair`;
+  exitBtn.onclick = () => overlay.remove();
+  overlay.appendChild(exitBtn);
+
+  /* Para painéis noVNC: move o iframe para o overlay */
+  const frameId = panelId === 'p-kstars'   ? 'vnc-k-frame' :
+                  panelId === 'p-phd2'     ? 'vnc-p-frame' :
+                  panelId === 'p-desktop'  ? 'vnc-d-frame' :
+                  panelId === 'p-terminal' ? 'term-frame'  : null;
+
+  if (frameId) {
+    const frame = $(frameId);
+    if (frame) {
+      const placeholder = document.createElement('div');
+      placeholder.id = frameId + '-placeholder';
+      placeholder.style.display = 'none';
+      frame.parentNode.insertBefore(placeholder, frame);
+
+      const frameWrapper = document.createElement('div');
+      frameWrapper.style.cssText = 'flex:1;min-height:0;overflow:hidden;';
+      frameWrapper.appendChild(frame);
+      overlay.appendChild(frameWrapper);
+
+      /* Ao fechar: devolve o frame ao lugar */
+      exitBtn.onclick = () => {
+        placeholder.parentNode.insertBefore(frame, placeholder);
+        placeholder.remove();
+        overlay.remove();
+      };
+    }
+  } else {
+    /* Para painéis de conteúdo: clone visual */
+    const clone = panel.cloneNode(true);
+    clone.style.cssText = 'flex:1;min-height:0;overflow-y:auto;position:relative;';
+    /* Remove o botão de fullscreen do clone para não aninha */
+    clone.querySelectorAll('.bp-fs').forEach(b => b.style.display = 'none');
+    overlay.appendChild(clone);
+  }
+
+  document.body.appendChild(overlay);
+
+  /* Tenta também o Fullscreen nativo no overlay */
+  const fn = overlay.requestFullscreen || overlay.webkitRequestFullscreen;
+  if (fn) fn.call(overlay).catch(() => {});
+}
+
+function requestFullscreenPanel(frameId) {
+  /* Atalho para abas noVNC — mantém compatibilidade */
+  const map = {
+    'vnc-k-frame': 'p-kstars', 'vnc-p-frame': 'p-phd2',
+    'vnc-d-frame': 'p-desktop', 'term-frame': 'p-terminal',
+  };
+  enterFullscreen(map[frameId] || frameId);
 }
 
 /* ══════════════════════════════════════════════
@@ -421,69 +481,53 @@ function setRate(el, rate) {
   document.querySelectorAll('.rb').forEach(b => b.classList.remove('active'));
   el.classList.add('active');
   STATE.slewRate = rate;
-  sendCmd({ type: 'slew_rate', rate });
+  sendCmd({ type:'slew_rate', rate });
 }
 
-function jp(dir) {
-  $('j' + dir)?.classList.add('pr');
-  sendCmd({ type: 'slew_start', direction: dir, rate: STATE.slewRate });
-}
-
-function jr(dir) {
-  $('j' + dir)?.classList.remove('pr');
-  sendCmd({ type: 'slew_stop', direction: dir });
-}
-
+function jp(dir) { $('j'+dir)?.classList.add('pr');    sendCmd({ type:'slew_start', direction:dir, rate:STATE.slewRate }); }
+function jr(dir) { $('j'+dir)?.classList.remove('pr'); sendCmd({ type:'slew_stop',  direction:dir }); }
 function jStop() {
-  ['N','S','E','W'].forEach(d => {
-    $('j' + d)?.classList.remove('pr');
-    sendCmd({ type: 'slew_stop', direction: d }, false);
-  });
+  ['N','S','E','W'].forEach(d => { $('j'+d)?.classList.remove('pr'); sendCmd({ type:'slew_stop', direction:d }, false); });
 }
 
 function setTrk(el, mode) {
   document.querySelectorAll('.trk button').forEach(b => b.classList.remove('active'));
   el.classList.add('active');
   STATE.tracking = mode === 'None' ? null : mode;
-  sendCmd({ type: 'tracking', mode });
+  sendCmd({ type:'tracking', mode });
 }
 
 function doGotoName() {
   const name = ($('goto-name')?.value || '').trim();
   if (!name) return;
-  setState({ gotoStatus: { success: null, message: `Resolvendo "${name}"…` } });
-  sendCmd({ type: 'goto_name', name });
+  setState({ gotoStatus:{ success:null, message:`Resolvendo "${name}"…` } });
+  sendCmd({ type:'goto_name', name });
 }
 
 function doGotoCoords() {
   const ra  = ($('goto-ra')?.value  || '').trim();
   const dec = ($('goto-dec')?.value || '').trim();
   if (!ra || !dec) return;
-  sendCmd({ type: 'goto_coords', ra, dec });
+  sendCmd({ type:'goto_coords', ra, dec });
 }
 
-function syncMount()  { sendCmd({ type: 'sync' }); }
-function parkMount()  { sendCmd({ type: 'park' }); }
+function syncMount() { sendCmd({ type:'sync' }); }
+function parkMount() { sendCmd({ type:'park' }); }
 
 /* ══════════════════════════════════════════════
    DRIVERS
    ══════════════════════════════════════════════ */
 
 const DRIVER_MAP = {
-  mount:       'indi_eqmod_telescope',
-  camera:      'indi_canon_ccd',
-  focuser:     'indi_moonlite',
-  filterwheel: 'indi_efw',
-  rotator:     'indi_simulator_rotator',
-  gps:         'indi_gpsd',
-  adxl:        'python_bridge',
+  mount:'indi_eqmod_telescope', camera:'indi_canon_ccd',
+  focuser:'indi_moonlite', filterwheel:'indi_efw',
+  rotator:'indi_simulator_rotator', gps:'indi_gpsd', adxl:'python_bridge',
 };
 
 function toggleDriver(key) {
-  const tog  = $('tog-' + key);
+  const tog = $('tog-' + key);
   if (!tog) return;
-  const willOn = !tog.classList.contains('on');
-  sendCmd({ type: willOn ? 'driver_start' : 'driver_stop', driver: DRIVER_MAP[key] || key });
+  sendCmd({ type: tog.classList.contains('on') ? 'driver_stop' : 'driver_start', driver: DRIVER_MAP[key] || key });
 }
 
 /* ══════════════════════════════════════════════
@@ -510,21 +554,17 @@ async function doAuth(type) {
 
   if (type === 'terminal') {
     const user = ($('user-terminal')?.value || '').trim();
-    const pwd  = $('pwd-terminal')?.value || '';
+    const pwd  = $('pwd-terminal')?.value  || '';
     if (!user || !pwd) { if (errEl) errEl.textContent = 'Preencha usuário e senha.'; return; }
-
     try {
       const res = await fetch(`http://${WS_HOST}:${WS_PORT}/api/auth/terminal`, {
-        method:  'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ user, password: pwd }),
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({ user, password:pwd }),
       });
       if (!res.ok) { if (errEl) errEl.textContent = 'Credenciais inválidas.'; return; }
       const { token } = await res.json();
-
       const frame  = $('term-frame');
       const status = $('term-status');
-      /* Token como query param — backend valida via /api/auth/verify */
       frame.innerHTML = `<iframe src="http://${WS_HOST}:7681/?token=${token}" style="width:100%;height:100%;border:none;background:#000" allow="fullscreen"></iframe>`;
       if (status) status.textContent = 'Conectado';
     } catch (e) {
@@ -547,7 +587,7 @@ async function doAuth(type) {
    ══════════════════════════════════════════════ */
 
 function toggleAP() {
-  sendCmd({ type: 'ap_toggle', enable: !STATE.network.ap_active });
+  sendCmd({ type:'ap_toggle', enable:!STATE.network.ap_active });
 }
 
 /* ══════════════════════════════════════════════
@@ -559,7 +599,7 @@ function tickClock() {
   const el = $('utc');
   if (el) {
     el.textContent =
-      String(d.getUTCHours()).padStart(2,'0')   + ':' +
+      String(d.getUTCHours()).padStart(2,'0') + ':' +
       String(d.getUTCMinutes()).padStart(2,'0') + ':' +
       String(d.getUTCSeconds()).padStart(2,'0') + ' UTC';
   }
@@ -570,8 +610,8 @@ function tickClock() {
    UTILITÁRIOS
    ══════════════════════════════════════════════ */
 
-function $(id)        { return document.getElementById(id); }
-function setText(id, t) { const e = $(id); if (e && e.textContent !== t) e.textContent = t; }
+function $(id)          { return document.getElementById(id); }
+function setText(id, t) { const e=$(id); if(e && e.textContent!==t) e.textContent=t; }
 
 /* ══════════════════════════════════════════════
    SERVICE WORKER
@@ -585,8 +625,9 @@ if ('serviceWorker' in navigator) {
    INIT
    ══════════════════════════════════════════════ */
 
-document.querySelectorAll('.panel, .novnc-panel').forEach(p => {
-  if (!p.classList.contains('active')) p.style.display = 'none';
+/* Garante que só p-mount está ativo no início */
+document.querySelectorAll('.panel').forEach(p => {
+  if (!p.classList.contains('active')) p.classList.remove('active');
 });
 
 connectWS();
