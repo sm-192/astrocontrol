@@ -306,14 +306,22 @@ Acesso: http://astropi.local:7681
 
 ## 13. GPSD
 
+> **Arquitetura — Single Source of Truth:**
+> O GPSD é o **único processo** que acessa `/dev/ttyAMA0` diretamente.
+> O driver INDI (`indi_gpsd`), o `bridge.py` e o Chrony (opcional) são **clientes** do GPSD via socket TCP (porta 2947).
+> Isso evita conflitos de porta serial entre o indiserver e o bridge.
+
 ```bash
 sudo apt install -y gpsd gpsd-clients
 
 # Configurar para GPS M8N em /dev/ttyAMA0:
+# -n  → não aguarda clientes para ativar o GPS
+# -s 9600 → fixa baudrate (evita scan automático que pode travar)
+# -F  → cria socket UNIX além do TCP
 sudo tee /etc/default/gpsd > /dev/null << 'EOF'
-DEVICES="/dev/ttyAMA0"
-GPSD_OPTIONS="-n"
 START_DAEMON="true"
+DEVICES="/dev/ttyAMA0"
+GPSD_OPTIONS="-n -F /var/run/gpsd.sock -s 9600"
 USBAUTO="false"
 EOF
 
@@ -330,6 +338,27 @@ sudo systemctl start gpsd
 gpsmon
 # ou:
 cgps -s
+```
+
+### Driver INDI para GPS (indi_gpsd)
+
+No INDI Web Manager, use o driver **`indi_gpsd`** (não um driver serial direto).
+Ele conecta ao GPSD via TCP (localhost:2947), respeitando a arquitetura de cliente único.
+
+```bash
+# Verificar se o driver está disponível:
+ls /usr/bin/indi_gpsd
+
+# No KStars/Ekos: adicionar dispositivo → GPS → GPSD Client
+```
+
+### Permitir restart do GPSD pelo bridge.py (watchdog)
+
+```bash
+# Adicionar ao sudoers para permitir restart sem senha:
+sudo visudo -f /etc/sudoers.d/astrocontrol
+# Inserir a linha:
+# samu192 ALL=(ALL) NOPASSWD: /bin/systemctl restart gpsd
 ```
 
 ---
@@ -571,6 +600,17 @@ curl -I http://localhost:3000
 
 ## 21. PYTHON SENSOR BRIDGE (ADXL345 + COMPASS + GPS)
 
+> **Arquitetura:** `bridge.py` consome dados do GPS via socket do GPSD (localhost:2947).
+> Ele **não acessa `/dev/ttyAMA0` diretamente** — o GPSD é o único dono da serial.
+>
+> **Estratégia de Snapshot (declinação magnética):**
+> 1. Aguarda GPS `mode >= 3` (3D Fix)
+> 2. Coleta 5 amostras de lat/lon — descarta mínimo e máximo
+> 3. Calcula média das 3 amostras centrais
+> 4. Calcula Declinação Magnética via `pyIGRF` (modelo WMM)
+> 5. Persiste resultado em `/dev/shm/astro_env.json` (RAM)
+> 6. Nas inicializações seguintes, carrega o cache imediatamente
+
 ```bash
 # Habilitar SPI e I2C:
 sudo raspi-config
@@ -580,7 +620,6 @@ sudo raspi-config
 # Instalar dependências Python:
 pip3 install --break-system-packages \
   websockets \
-  pyserial \
   spidev \
   smbus2 \
   gpsd-py3 \
@@ -588,13 +627,19 @@ pip3 install --break-system-packages \
 
 # Identificar modelo do compass:
 sudo i2cdetect -y 1
-# 0x1E = HMC5883L
-# 0x0D = QMC5883L
+# 0x1E = HMC5883L  (suportado pelo bridge.py — auto-detect)
+# 0x0D = QMC5883L  (suportado pelo bridge.py — auto-detect)
 
-# Criar serviço (o script bridge.py será implementado separadamente):
+# Copiar bridge.py para o Pi:
+scp bridge.py samu192@astropi.local:~/astrocontrol/
+
+# Testar manualmente antes de ativar como serviço:
+python3 ~/astrocontrol/bridge.py
+
+# Criar serviço systemd:
 sudo tee /etc/systemd/system/astro-sensors.service > /dev/null << 'EOF'
 [Unit]
-Description=AstroControl Sensor Bridge (ADXL345 + Compass + GPS)
+Description=AstroControl Sensor Bridge (ADXL345 + Compass + GPSD)
 After=gpsd.service
 Wants=gpsd.service
 
@@ -610,8 +655,11 @@ WantedBy=multi-user.target
 EOF
 
 sudo systemctl daemon-reload
-# Ativar apenas quando o script bridge.py estiver pronto:
-# sudo systemctl enable --now astro-sensors
+sudo systemctl enable --now astro-sensors
+
+# Verificar:
+systemctl status astro-sensors
+journalctl -u astro-sensors -f
 ```
 
 ---

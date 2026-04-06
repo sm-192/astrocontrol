@@ -537,6 +537,15 @@ app.post('/api/auth/terminal', (req, res) => {
   });
 });
 
+app.get('/api/ports', async (req, res) => {
+  try {
+    // Busca portas seriais comuns no Linux/Raspberry Pi
+    const out = await sh('ls /dev/ttyUSB* /dev/ttyACM* /dev/ttyAMA* 2>/dev/null');
+    const ports = out.split('\n').filter(Boolean);
+    res.json({ ports });
+  } catch(e) { res.json({ ports: [] }); }
+});
+
 app.get('/api/auth/verify', (req, res) => {
   const t = TOKENS.get(req.query.token);
   if (!t || t.exp < Date.now()) return res.status(401).end();
@@ -829,7 +838,7 @@ function handleMsg(session, msg) {
     case 'sync':          indiSync(session);  emit(ws,'goto_result',{success:true,message:'Sync enviado'}); break;
     case 'park':          indiPark(session,true);  emit(ws,'goto_result',{success:true,message:'Park enviado'}); break;
     case 'unpark':        indiPark(session,false); break;
-    case 'driver_start':  startDriver(ws, msg.driver); break;
+    case 'driver_start':  startDriver(session, msg.driver, msg.port); break;
     case 'driver_stop':   stopDriver(ws, msg.driver);  break;
     case 'ap_toggle':     toggleAP(ws, msg.enable);    break;
     case 'network_status': refreshNet(ws); break;
@@ -878,10 +887,33 @@ function indiWebReq(method, urlPath) {
   });
 }
 
-async function startDriver(ws, driver) {
+async function startDriver(session, driver, port) {
+  const ws = session.ws;
   try {
     await indiWebReq('POST', `/api/server/start/${encodeURIComponent(driver)}`);
     log(ws, 'ok', `Driver: ${driver} iniciado`);
+
+    // Se uma porta foi fornecida, tentamos configurar o driver
+    if (port) {
+      log(ws, 'dim', `Configurando porta: ${port}...`);
+      
+      // Tentativa imediata e uma tentativa após 3s (para garantir que o driver registrou as props)
+      const setPort = () => {
+        const devName = Array.from(KNOWN_DEVICES.entries()).find(([name, key]) => 
+          name === driver || name.toLowerCase().includes(driver.toLowerCase()) || 
+          (DRIVER_MAP[key] === driver)
+        )?.[0] || driver;
+
+        const xml = `<newTextVector device="${devName}" name="DEVICE_PORT"><oneText name="PORT">${port}</oneText></newTextVector>`;
+        indiWrite(session, xml);
+        // Também tenta conectar o driver após setar a porta
+        indiWrite(session, `<newSwitchVector device="${devName}" name="CONNECTION"><oneSwitch name="CONNECT">On</oneSwitch></newSwitchVector>`);
+      };
+
+      setPort();
+      setTimeout(setPort, 3000);
+    }
+
     setTimeout(() => refreshDrivers(ws), 1500);
   } catch(e) { log(ws, 'er', `Falha ao iniciar ${driver}: ${e.message}`); }
 }

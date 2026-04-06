@@ -12,6 +12,12 @@
   <link rel="stylesheet" href="style.css"/>
 </head>
 <body>
+  <!-- PULL TO REFRESH CIRCLE (STROKE) -->
+  <div id="ptr-spinner" class="ptr-spinner">
+    <svg viewBox="0 0 40 40" class="ptr-svg">
+      <circle cx="20" cy="20" r="16" fill="none" stroke="currentColor" stroke-width="3" stroke-dasharray="100" stroke-dashoffset="100" />
+    </svg>
+  </div>
 
   <!-- TOPBAR -->
   <header class="topbar">
@@ -166,41 +172,55 @@
         <span id="sensor-banner-txt">Aguardando Python bridge :8765…</span>
       </div>
 
-      <!-- Grade simplificada: barra de latitude + nível 2D + feedback -->
+      <!-- Grade: bússola + barra lat lado a lado (cima) | nível grande + feedback (baixo) -->
       <div class="align-grid">
 
-        <!-- Barra vertical latitude -->
-        <div class="vis-box align-lat-box">
-          <div class="vis-t">Inclinação polar (Pitch)</div>
-          <canvas id="cv-bar-lat" width="28" height="160"></canvas>
-          <div class="bar-val" id="lat-bar-val">--</div>
+        <!-- Linha superior: barra de inclinação | bússola -->
+        <div class="align-top-row">
+
+          <!-- Barra vertical de inclinação (pitch) — altura = bússola -->
+          <div class="vis-box align-lat-box">
+            <div class="vis-t">Pitch</div>
+            <canvas id="cv-bar-lat" width="28" height="200"></canvas>
+            <div class="bar-val" id="lat-bar-val">--</div>
+          </div>
+
+          <!-- Bússola polar -->
+          <div class="vis-box align-compass-box">
+            <div class="vis-t">Bússola polar</div>
+            <canvas id="cv-compass" width="200" height="200"></canvas>
+          </div>
+
         </div>
 
-        <!-- Nível 2D — peça central -->
-        <div class="vis-box align-nivel-box">
-          <div class="vis-t">Nível do tripé</div>
-          <div class="nivel-inner">
-            <canvas id="cv-nivel" width="96" height="96"></canvas>
-            <div class="nivel-info">
-              <div class="nivel-row">Pitch: <span id="pitch-val">--</span></div>
-              <div class="nivel-row">Roll: <span id="roll-val">--</span></div>
-              <div id="nivel-status" class="nivel-status">--</div>
+        <!-- Linha inferior: nível grande + feedback -->
+        <div class="align-bottom-row">
+
+          <div class="vis-box align-nivel-box">
+            <div class="vis-t">Nível do tripé</div>
+            <div class="nivel-inner">
+              <!-- AJUSTE DE TAMANHO DO NÍVEL: edite 'width' e 'height' abaixo (ex: 90 para menor) -->
+              <canvas id="cv-nivel" width="100" height="100"></canvas>
+              <div class="nivel-info">
+                <div class="nivel-row">Pitch: <span id="pitch-val">--</span></div>
+                <div class="nivel-row">Roll: <span id="roll-val">--</span></div>
+                <div id="nivel-status" class="nivel-status">--</div>
+              </div>
             </div>
           </div>
-        </div>
 
-        <!-- Feedback de alinhamento -->
-        <div class="fb align-fb-box" id="a-fb">
-          <div class="fb-dot" id="a-dot"></div>
-          <div class="fb-txt" id="a-txt">Aguardando sensores…</div>
+          <div class="fb align-fb-box" id="a-fb">
+            <div class="fb-dot" id="a-dot"></div>
+            <div class="fb-txt" id="a-txt">Aguardando sensores…</div>
+          </div>
+
         </div>
 
       </div>
 
-      <!-- Canvas mantidos no DOM mas ocultos — alignment.js ainda os referencia -->
-      <canvas id="cv-bar-dec"  width="1" height="1" style="display:none"></canvas>
-      <canvas id="cv-compass"  width="1" height="1" style="display:none"></canvas>
-      <span   id="dec-bar-val"                      style="display:none"></span>
+      <!-- Canvas ocultos que alignment.js ainda referencia -->
+      <canvas id="cv-bar-dec" width="1" height="1" style="display:none"></canvas>
+      <span   id="dec-bar-val"                     style="display:none"></span>
     </div>
 
     <!-- ══════════ KSTARS ══════════ -->
@@ -329,14 +349,28 @@
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M1 5V1h4M9 1h4v4M13 9v4H9M5 13H1V9"/></svg>
         </button>
       </div>
-      <div class="sec">Dispositivos INDI</div>
-      <div class="drv-row"><span class="dot dx" id="dot-mount"></span><div class="drv-txt"><div class="drv-name">Montagem equatorial 3D</div><div class="drv-sub">EQMod · /dev/ttyUSB0</div></div><div class="tog" id="tog-mount" onclick="toggleDriver('mount')"></div></div>
-      <div class="drv-row"><span class="dot dx" id="dot-camera"></span><div class="drv-txt"><div class="drv-name">Canon EOS (DSLR)</div><div class="drv-sub">indi_canon_ccd · USB</div></div><div class="tog" id="tog-camera" onclick="toggleDriver('camera')"></div></div>
-      <div class="drv-row"><span class="dot dx" id="dot-focuser"></span><div class="drv-txt"><div class="drv-name">Focalizador eletrônico</div><div class="drv-sub">indi_moonlite · /dev/ttyUSB1</div></div><div class="tog" id="tog-focuser" onclick="toggleDriver('focuser')"></div></div>
-      <div class="drv-row"><span class="dot dx" id="dot-filterwheel"></span><div class="drv-txt"><div class="drv-name">Roda de filtros</div><div class="drv-sub">indi_efw</div></div><div class="tog" id="tog-filterwheel" onclick="toggleDriver('filterwheel')"></div></div>
-      <div class="drv-row"><span class="dot dx" id="dot-rotator"></span><div class="drv-txt"><div class="drv-name">Rotacionador de campo</div><div class="drv-sub">Sem driver</div></div><div class="tog" id="tog-rotator" onclick="toggleDriver('rotator')"></div></div>
-      <div class="drv-row"><span class="dot dx" id="dot-gps"></span><div class="drv-txt"><div class="drv-name">GPS M8N + Compass</div><div class="drv-sub">NMEA · /dev/ttyAMA0</div></div><div class="tog" id="tog-gps" onclick="toggleDriver('gps')"></div></div>
-      <div class="drv-row"><span class="dot dx" id="dot-adxl"></span><div class="drv-txt"><div class="drv-name">ADXL345 (acelerômetro)</div><div class="drv-sub">SPI · Python bridge :8765</div></div><div class="tog" id="tog-adxl" onclick="toggleDriver('adxl')"></div></div>
+      <div class="sec">Detecção de Hardware</div>
+      <div id="detected-ports-container" class="port-chips-container">
+        <span class="dim" style="font-size:10px">Buscando portas USB...</span>
+      </div>
+
+      <div class="sec">Drivers INDI</div>
+      <div class="drv-row"><span class="dot dx" id="dot-mount"></span><div class="drv-txt"><div class="drv-name">Montagem equatorial</div><div class="drv-sub">indi_eqmod_telescope</div></div><input type="text" class="port-input" id="port-mount" placeholder="/dev/ttyUSB0" title="Porta Serial"/><div class="tog" id="tog-mount" onclick="toggleDriver('mount')"></div></div>
+      <div class="drv-row"><span class="dot dx" id="dot-camera"></span><div class="drv-txt"><div class="drv-name">Canon EOS (DSLR)</div><div class="drv-sub">indi_canon_ccd</div></div><input type="text" class="port-input" id="port-camera" placeholder="USB" title="Porta"/><div class="tog" id="tog-camera" onclick="toggleDriver('camera')"></div></div>
+      <div class="drv-row"><span class="dot dx" id="dot-focuser"></span><div class="drv-txt"><div class="drv-name">Focalizador</div><div class="drv-sub">indi_moonlite</div></div><input type="text" class="port-input" id="port-focuser" placeholder="/dev/ttyUSB1"/><div class="tog" id="tog-focuser" onclick="toggleDriver('focuser')"></div></div>
+      <div class="drv-row"><span class="dot dx" id="dot-filterwheel"></span><div class="drv-txt"><div class="drv-name">Roda de filtros</div><div class="drv-sub">indi_efw</div></div><input type="text" class="port-input" id="port-filterwheel" placeholder="USB"/><div class="tog" id="tog-filterwheel" onclick="toggleDriver('filterwheel')"></div></div>
+      <div class="drv-row"><span class="dot dx" id="dot-rotator"></span><div class="drv-txt"><div class="drv-name">Rotacionador</div><div class="drv-sub">Sem driver</div></div><input type="text" class="port-input" id="port-rotator" placeholder="/dev/ttyUSB2"/><div class="tog" id="tog-rotator" onclick="toggleDriver('rotator')"></div></div>
+      <div class="drv-row"><span class="dot dx" id="dot-gps"></span><div class="drv-txt"><div class="drv-name">GPS + Compass</div><div class="drv-sub">indi_gpsd</div></div><input type="text" class="port-input" id="port-gps" placeholder="localhost"/><div class="tog" id="tog-gps" onclick="toggleDriver('gps')"></div></div>
+      <div class="drv-row"><span class="dot dx" id="dot-adxl"></span><div class="drv-txt"><div class="drv-name">ADXL345</div><div class="drv-sub">Python bridge</div></div><input type="text" class="port-input" id="port-adxl" placeholder=":8765"/><div class="tog" id="tog-adxl" onclick="toggleDriver('adxl')"></div></div>
+      <div id="custom-drivers-list"></div>
+
+      <!-- Formulário para adicionar driver manual -->
+      <div class="drv-row drv-add-row" style="background:rgba(255,255,255,0.01); border-style:dashed;">
+        <input type="text" id="new-driver-name" class="inp sm" placeholder="Binário (ex: indi_rpifocus)" style="flex:1; font-size:11px;"/>
+        <input type="text" id="new-driver-port" class="port-input" placeholder="Porta (opcional)"/>
+        <button class="bp bp-p sm" onclick="addCustomDriver()">+</button>
+      </div>
+
       <div class="log" id="indi-log"><div><span class="dim">[--]</span> Aguardando conexão…</div></div>
     </div>
 

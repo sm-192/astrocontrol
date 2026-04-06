@@ -170,8 +170,7 @@ body {
 /* ══════════════════════════════════════
    ABA MONTAGEM
    ══════════════════════════════════════ */
-#p-mount { /* flex-direction:column já vem de .panel.active */ }
-
+   
 .mount-body {
   display: flex; flex: 1; min-height: 0; gap: 10px; padding: 10px;
 }
@@ -289,9 +288,8 @@ body {
 .cval.small { font-size:12px; }
 
 /* ══════════════════════════════════════
-   ABA ALINHAMENTO POLAR (simplificada)
-   Mantém: barra de latitude + nível 2D + feedback
-   Remove: barra de declinação e bússola
+   ABA ALINHAMENTO POLAR
+   Layout: barra pitch | nível 2D | bússola | feedback
    ══════════════════════════════════════ */
 #p-align { overflow-y: auto; -webkit-overflow-scrolling: touch; }
 
@@ -313,54 +311,154 @@ body {
 .sensor-banner.active { background:rgba(29,158,117,.1); border-color:var(--green); color:var(--green-l); }
 .sensor-banner.error  { background:rgba(226,75,74,.1);  border-color:var(--red);   color:var(--red); }
 
-/* Grade de visualização */
+/* Container principal — coluna de linhas */
 .align-grid {
   display: flex;
+  flex-direction: column;
   gap: 10px;
   padding: 10px;
   flex: 1;
   min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
-/* Portrait: coluna única scrollável */
-@media (orientation: portrait) {
-  .align-grid { flex-direction: column; overflow-y: visible; }
-  .align-lat-box canvas { width: 22px !important; height: 128px !important; }
+/* ── Linha 1: barra lat + bússola lado a lado ── */
+.align-top-row {
+  display: flex;
+  flex-direction: row;
+  gap: 10px;
+  align-items: stretch;
+  flex-shrink: 0;
 }
 
-/* Landscape: linha — lat | nível | feedback */
-@media (orientation: landscape) {
-  .align-grid    { flex-direction: row; overflow: hidden; }
-  .align-lat-box   { flex: 0 0 70px; }
-  .align-nivel-box { flex: 1; }
-  .align-fb-box    { flex: 0 0 220px; }
-}
-
+/* Barra de inclinação — largura fixa, altura = bússola via stretch */
 .align-lat-box {
-  display: flex; align-items: center; gap: 10px; padding: 12px;
+  flex: 0 0 110px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 8px;
+  gap: 4px;
 }
-@media (orientation: portrait)  { .align-lat-box { flex-direction: row; } }
-@media (orientation: landscape) { .align-lat-box { flex-direction: column; justify-content: center; } }
 
-.align-nivel-box { padding: 12px; }
-.align-fb-box    { flex-shrink: 0; }
+/* Canvas da barra: ocupa todo o espaço vertical disponível */
+.align-lat-box canvas {
+  flex: 1;
+  width: 28px !important;
+  min-height: 100px;
+}
+
+/* Bússola: ocupa o resto da linha */
+.align-compass-box {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 10px;
+  gap: 6px;
+}
+
+/* Canvas bússola: quadrado responsivo */
+#cv-compass {
+  width: 100% !important;
+  height: auto !important;
+  aspect-ratio: 1 / 1;
+  max-width: 200px;
+  max-height: 200px;
+}
+
+/* ── Linha 2: Nível + Feedback ── */
+.align-bottom-row {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+/* ── Nível 2D ── */
+.align-nivel-box {
+  padding: 16px 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.align-nivel-box .vis-t {
+  text-align: center;
+}
+
+
+/* O JS lê clientWidth/clientHeight do canvas para dimensionar — força quadrado */
+.compass-wrap canvas { max-height: 200px; }
+
+.align-fb-box { flex-shrink: 0; }
 
 /* ── Vis boxes ── */
 .vis-box { background:var(--bg3); border:.5px solid rgba(255,255,255,.06); border-radius:9px; }
-.vis-t   { font-size:10px; color:var(--dim); margin-bottom:6px; display:block; }
+.vis-t   { font-size:10px; color:var(--dim); margin-bottom:8px; display:block; width:100%; }
 .bar-val { font-size:10px; color:var(--muted); text-align:center; font-variant-numeric:tabular-nums; margin-top:4px; }
 
 /* ── Nível ── */
-.nivel-inner { display:flex; align-items:center; gap:10px; width:100%; }
-.nivel-info  { display:flex; flex-direction:column; gap:5px; min-width:0; }
+.nivel-inner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 15px;
+  width: 100%;
+  margin-top: 4px;
+  flex-wrap: wrap; /* Permite empilhar se a tela for estreita */
+}
+
+#cv-nivel {
+  max-width: calc(100vw - 40px); /* Garante que não ultrapasse a largura da tela */
+  height: auto !important;
+}
+
+.nivel-info {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 100px;
+}
+
 .nivel-row   { font-size:11px; color:var(--muted); font-variant-numeric:tabular-nums; }
 .nivel-row span { font-weight:500; }
 .nivel-status { font-size:11px; margin-top:3px; font-weight:500; }
 
 /* ── Feedback ── */
+.drv-row {
+  display: flex; align-items: center; padding: 12px;
+  background: rgba(255,255,255,.03); border-radius: 8px;
+  margin-bottom: 8px; border: 1px solid rgba(255,255,255,.05);
+  gap: 8px;
+}
+.port-input {
+  background: rgba(0,0,0,.3); border: 1px solid rgba(255,255,255,0.1);
+  color: var(--green); font-size: 10px; padding: 4px 6px;
+  border-radius: 4px; width: 80px; outline: none;
+  font-family: monospace;
+}
+.port-input:focus { border-color: var(--green); background: rgba(0,0,0,.5); }
+
+/* Chips de portas detectadas */
+.port-chips-container {
+  margin: 10px 0; display: flex; flex-wrap: wrap; gap: 6px;
+}
+.p-chip {
+  background: var(--blue-d); color: #fff; font-size: 10px;
+  padding: 4px 10px; border-radius: 12px; cursor: pointer;
+  border: 1px solid rgba(255,255,255,0.1); transition: all 0.2s;
+  white-space: nowrap;
+}
+.p-chip:hover { background: var(--blue); transform: translateY(-1px); }
+.p-chip:active { transform: translateY(0); scale: 0.95; }
 .fb { display:flex; align-items:flex-start; gap:9px; padding:10px 12px; border-radius:9px; border:.5px solid rgba(255,255,255,.06); background:var(--bg2); transition:all .3s; }
 .fb-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; margin-top:3px; background:var(--dim); transition:background .3s; }
 .fb-txt { font-size:11px; line-height:1.5; color:var(--muted); }
+
 
 /* ══════════════════════════════════════
    ABAS noVNC (KStars, PHD2, Desktop, Terminal)
@@ -444,6 +542,33 @@ body {
 .ap-sub   { font-size:10px; color:var(--dim); margin-top:2px; }
 .ap-detail { opacity:0.3; transition:opacity .3s; }
 .ap-detail.visible { opacity:1; }
+
+.ptr-spinner {
+  position: fixed; top: 0; left: 50%; 
+  transform: translate(-50%, -70px); 
+  width: 42px; height: 42px; 
+  background: var(--bg2); color: var(--green);
+  border-radius: 50%; box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 10000; transition: transform 0.4s cubic-bezier(0.19, 1, 0.22, 1), opacity 0.3s;
+  pointer-events: none; opacity: 0;
+  border: 0.5px solid var(--border-mid);
+}
+
+.ptr-spinner .ptr-svg {
+  width: 28px; height: 28px; 
+  stroke-linecap: round;
+  transition: transform 0.1s linear;
+}
+
+.ptr-spinner.spinning .ptr-svg { animation: ptr-spin 0.8s linear infinite; }
+@keyframes ptr-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+#cv-nivel {
+  /* TAMANHO VISUAL DO NÍVEL (ajuste a largura se necessário) */
+  max-width: Min(150px, 100vw - 40px);
+  height: auto !important;
+}
 
 /* ══════════════════════════════════════
    SCROLLBAR + SAFE AREA

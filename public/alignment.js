@@ -252,36 +252,51 @@ function drawBarLat() {
   const c = document.getElementById('cv-bar-lat');
   if (!c) return;
   const ctx = c.getContext('2d');
-  const W = c.width, H = c.height;
+
+  /* HiDPI */
+  const dpr = window.devicePixelRatio || 1;
+  const cssW = c.clientWidth || c.width;
+  const cssH = c.clientHeight || c.height;
+  if (c.width !== cssW * dpr || c.height !== cssH * dpr) {
+    c.width = cssW * dpr;
+    c.height = cssH * dpr;
+  }
+  ctx.resetTransform();
+  ctx.scale(dpr, dpr);
+
+  const W = cssW, H = cssH;
   ctx.clearRect(0, 0, W, H);
 
-  const cx = W / 2, tw = 10, tt = 8, tb = H - 8, th = tb - tt;
+  const cx = W / 2, tw = 10, tt = 20, tb = H - 20, th = tb - tt;
   const cy = tt + th / 2;
 
   /* Trilho */
   ctx.fillStyle = '#0a0f1e';
   roundRect(ctx, cx - tw/2, tt, tw, th, 4);
   ctx.fill();
-  ctx.strokeStyle = 'rgba(255,255,255,0.08)';
-  ctx.lineWidth = 0.5;
+  ctx.strokeStyle = 'rgba(255,255,255,0.12)';
+  ctx.lineWidth = 1;
   ctx.stroke();
 
   /* Linha de referência (alvo = latitude GPS) */
   ctx.beginPath();
-  ctx.moveTo(cx - tw/2 - 5, cy);
-  ctx.lineTo(cx + tw/2 + 5, cy);
-  ctx.strokeStyle = 'rgba(29,158,117,0.6)';
-  ctx.lineWidth = 1;
-  ctx.setLineDash([3, 3]);
+  ctx.moveTo(cx - tw/2 - 12, cy);
+  ctx.lineTo(cx + tw/2 + 12, cy);
+  ctx.strokeStyle = '#1d9e75';
+  ctx.lineWidth = 2;
+  ctx.setLineDash([4, 2]);
   ctx.stroke();
   ctx.setLineDash([]);
 
-  /* Label de referência */
+  /* Label do Alvo */
   if (ALIGN.lat !== null) {
-    ctx.fillStyle = 'rgba(255,255,255,0.15)';
-    ctx.font = '7px system-ui';
-    ctx.textAlign = 'center';
-    ctx.fillText(ALIGN.lat.toFixed(1) + '°', cx, cy - 7);
+    ctx.fillStyle = '#1d9e75';
+    ctx.font = 'bold 9px system-ui';
+    ctx.textAlign = 'left';
+    ctx.fillText('ALVO', cx + tw/2 + 15, cy - 2);
+    ctx.fillStyle = 'rgba(255,255,255,0.7)';
+    ctx.font = '9px system-ui';
+    ctx.fillText(ALIGN.lat.toFixed(2) + '°', cx + tw/2 + 15, cy + 8);
   }
 
   /* Marcador — só se há dados */
@@ -293,17 +308,34 @@ function drawBarLat() {
 
   const range = 20;
   const off   = Math.max(-1, Math.min(1, ALIGN.pitch / range)) * th / 2;
-  const my    = Math.max(tt + 7, Math.min(tb - 7, cy + off));
+  const my    = Math.max(tt + 10, Math.min(tb - 10, cy + off));
   const col   = feedbackColor(Math.abs(ALIGN.pitch), 0.3, 1.5);
 
-  ctx.fillStyle = col + '30';
-  ctx.beginPath(); ctx.arc(cx, my, 10, 0, Math.PI * 2); ctx.fill();
+  /* Sombra/Brilho do marcador */
+  ctx.shadowBlur = 10;
+  ctx.shadowColor = col + '60';
+
+  ctx.fillStyle = col + '40';
+  ctx.beginPath(); ctx.arc(cx, my, 12, 0, Math.PI * 2); ctx.fill();
   ctx.fillStyle = col;
-  ctx.beginPath(); ctx.arc(cx, my, 5, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.arc(cx, my, 6, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.arc(cx, my, 2, 0, Math.PI * 2); ctx.fillStyle = '#fff'; ctx.fill();
+
+  ctx.shadowBlur = 0;
+
+  /* Label do Atual */
+  const angleAt = (ALIGN.lat || 0) + ALIGN.pitch;
+  ctx.fillStyle = col;
+  ctx.font = 'bold 9px system-ui';
+  ctx.textAlign = 'right';
+  ctx.fillText('ATUAL', cx - tw/2 - 15, my - 2);
+  ctx.fillStyle = '#fff';
+  ctx.font = '9px system-ui';
+  ctx.fillText(angleAt.toFixed(2) + '°', cx - tw/2 - 15, my + 8);
 
   const valEl = document.getElementById('lat-bar-val');
   if (valEl && ALIGN.lat !== null) {
-    valEl.textContent = (ALIGN.lat + ALIGN.pitch).toFixed(3) + '°';
+    valEl.textContent = angleAt.toFixed(3) + '°';
     valEl.style.color = col;
   }
 }
@@ -382,7 +414,19 @@ function drawNivel2D() {
   const c = document.getElementById('cv-nivel');
   if (!c) return;
   const ctx = c.getContext('2d');
-  const W = c.width, H = c.height;
+
+  /* HiDPI para nitidez total */
+  const dpr = window.devicePixelRatio || 1;
+  const cssW = c.clientWidth || c.width;
+  const cssH = c.clientHeight || c.height;
+  if (c.width !== cssW * dpr || c.height !== cssH * dpr) {
+    c.width = cssW * dpr;
+    c.height = cssH * dpr;
+  }
+  ctx.resetTransform();
+  ctx.scale(dpr, dpr);
+
+  const W = cssW, H = cssH;
   const cx = W / 2, cy = H / 2, R = Math.min(W, H) / 2 - 4;
 
   ctx.clearRect(0, 0, W, H);
@@ -398,14 +442,23 @@ function drawNivel2D() {
     ctx.strokeStyle = 'rgba(255,255,255,0.04)'; ctx.lineWidth = 0.5; ctx.stroke();
   }
 
-  /* Cruza */
-  ctx.strokeStyle = 'rgba(255,255,255,0.07)'; ctx.lineWidth = 0.5;
+  /* Cruza de fundo */
+  ctx.strokeStyle = 'rgba(255,255,255,0.06)'; ctx.lineWidth = 0.5;
   ctx.beginPath(); ctx.moveTo(cx - R, cy); ctx.lineTo(cx + R, cy); ctx.stroke();
   ctx.beginPath(); ctx.moveTo(cx, cy - R); ctx.lineTo(cx, cy + R); ctx.stroke();
 
-  /* Ponto central (target) */
-  ctx.beginPath(); ctx.arc(cx, cy, 3, 0, Math.PI * 2);
-  ctx.fillStyle = 'rgba(29,158,117,0.5)'; ctx.fill();
+  /* PONTO CENTRAL (Target) — Redesenhado para nitidez extrema */
+  ctx.beginPath(); ctx.arc(cx, cy, 6, 0, Math.PI * 2);
+  ctx.strokeStyle = 'rgba(29,158,117,0.3)'; ctx.lineWidth = 3; ctx.stroke();
+  
+  ctx.beginPath(); ctx.arc(cx, cy, 4, 0, Math.PI * 2);
+  ctx.strokeStyle = '#1d9e75'; ctx.lineWidth = 1.5; ctx.stroke();
+
+  /* Crosshair central micro */
+  ctx.beginPath();
+  ctx.moveTo(cx - 2, cy); ctx.lineTo(cx + 2, cy);
+  ctx.moveTo(cx, cy - 2); ctx.lineTo(cx, cy + 2);
+  ctx.strokeStyle = '#fff'; ctx.lineWidth = 1; ctx.stroke();
 
   if (!ALIGN.hasData) {
     /* Estado de espera — texto centralizado */
@@ -428,10 +481,19 @@ function drawNivel2D() {
   const col   = feedbackColor(dist, 0.4, 2.0);
 
   /* Bolha */
+  ctx.shadowBlur = 10;
+  ctx.shadowColor = col + '40';
+  
   ctx.fillStyle = col + '22';
   ctx.beginPath(); ctx.arc(bx, by, 16, 0, Math.PI * 2); ctx.fill();
   ctx.fillStyle = col;
   ctx.beginPath(); ctx.arc(bx, by, 9, 0, Math.PI * 2); ctx.fill();
+  
+  /* Ponto de luz na bolha para volume */
+  ctx.fillStyle = 'rgba(255,255,255,0.4)';
+  ctx.beginPath(); ctx.arc(bx - 3, by - 3, 2, 0, Math.PI * 2); ctx.fill();
+
+  ctx.shadowBlur = 0;
 
   setText('pitch-val', ALIGN.pitch.toFixed(2) + '°');
   setText('roll-val',  ALIGN.roll.toFixed(2)  + '°');

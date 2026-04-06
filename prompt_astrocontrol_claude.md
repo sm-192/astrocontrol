@@ -132,12 +132,14 @@ done
 ```bash
 sudo apt install gpsd gpsd-clients -y
 sudo nano /etc/default/gpsd
-# DEVICES="/dev/ttyAMA0"
-# GPSD_OPTIONS="-n"
 # START_DAEMON="true"
+# DEVICES="/dev/ttyAMA0"
+# GPSD_OPTIONS="-n -F /var/run/gpsd.sock -s 9600"
 # USBAUTO="false"
 sudo systemctl enable gpsd && sudo systemctl start gpsd
 ```
+> Driver INDI: usar **`indi_gpsd`** (cliente TCP do GPSD) — não driver serial direto.
+> Watchdog: `samu192 ALL=(ALL) NOPASSWD: /bin/systemctl restart gpsd` em `/etc/sudoers.d/astrocontrol`
 
 2. **Configurar Astrometry.net**
 ```bash
@@ -179,10 +181,13 @@ sudo apt install nodejs -y
 ```
 
 6. **Script Python bridge** (ADXL345 + compass + gpsd → WebSocket)
-   - A implementar: lê SPI (ADXL345), I2C (compass), gpsd via TCP
-   - Calcula declinação magnética com `pyIGRF` ou `geomag`
-   - Publica pitch, roll, heading, lat, lon via WebSocket na porta 8765
-   - A interface consome esse WebSocket em tempo real
+   - Implementado: `bridge.py` (v1.0)
+   - Lê SPI (ADXL345), I2C (compass HMC5883L ou QMC5883L — auto-detect)
+   - Consome GPSD via socket TCP (localhost:2947) — **não acessa `/dev/ttyAMA0` diretamente**
+   - Estratégia de Snapshot: aguarda 3D Fix, coleta 5 amostras, descarta extremos, calcula média
+   - Calcula declinação magnética com `pyIGRF` e persiste em `/dev/shm/astro_env.json`
+   - Watchdog: reinicia gpsd via systemctl se sem update por 60s
+   - Publica pitch, roll, heading, true_heading, lat, lon via WebSocket na porta 8765
 
 ---
 
@@ -220,6 +225,8 @@ Para recriar, peça ao Claude:
 - **AP automático** — sobe sozinho quando sem WiFi; desligado em casa; toggle manual na aba Rede
 - **astropi.local** — resolvido via dnsmasq no modo AP; no modo STA depende do roteador ou edição do `/etc/hosts`
 - **Autenticação** — KStars e PHD2 sem senha (rede local fechada); Desktop e Terminal com senha
+- **GPSD — Single Source of Truth** — único processo com acesso a `/dev/ttyAMA0`; driver INDI `indi_gpsd` e `bridge.py` são clientes via TCP (porta 2947). Evita conflito de porta serial entre indiserver e bridge.
+- **Declinação magnética via Snapshot** — calculada uma vez após 3D Fix estável (média de 5 amostras); cacheada em `/dev/shm/astro_env.json`; recarregada automaticamente após reboot.
 
 ---
 
