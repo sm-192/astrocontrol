@@ -28,7 +28,7 @@ const STATE = {
   slewRate: 16,
   tracking: null,
   gotoStatus: null,
-  network: { mode: '--', ip: '--', ssid: '--', signal: '--', ap_active: false, ap_clients: 0, services: {} },
+  network: { mode: '--', ip: '--', ssid: '--', signal: '--', ap_active: false, ap_clients: 0, services: {}, wifi_status: '' },
   drivers: [],
   indiserver: false,
   logs: [],
@@ -375,6 +375,7 @@ function renderNetwork() {
     : 'Desativado · sobe automaticamente sem WiFi';
   if (detail) detail.classList.toggle('visible', !!n.ap_active);
   setText('ap-clients', String(n.ap_clients));
+  setText('wifi-status-msg', n.wifi_status || 'Digite SSID e senha para conectar à nova rede.');
 
   Object.entries(n.services || {}).forEach(([k, up]) => {
     const dot = $('svc-dot-' + k);
@@ -580,7 +581,7 @@ function handleMsg(msg) {
     case 'network': {
       /* Remove msg.type antes de salvar no STATE */
       const { type: _t, ...net } = msg;
-      setState({ network: net });
+      setState({ network: { ...STATE.network, ...net, wifi_status: net.wifi_status || STATE.network.wifi_status } });
       break;
     }
 
@@ -1822,6 +1823,20 @@ function toggleAP() {
   setState({ network: { ap_active: newState } });
   
   sendCmd({ type: 'ap_toggle', enable: newState });
+}
+
+function wifiConnect() {
+  const ssid = ($('wifi-ssid')?.value || '').trim();
+  const password = ($('wifi-password')?.value || '').trim();
+
+  if (!ssid) {
+    setText('wifi-status-msg', 'SSID obrigatório.');
+    return;
+  }
+
+  setText('wifi-status-msg', `Conectando a ${ssid}...`);
+  setState({ network: { wifi_status: `Conectando a ${ssid}...` } });
+  sendCmd({ type: 'wifi_connect', ssid, password });
 }
 
 /* ══════════════════════════════════════════════

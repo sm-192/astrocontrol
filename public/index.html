@@ -616,6 +616,18 @@
         <div class="net-card"><div class="net-label">Clientes</div><div class="net-val" id="ap-clients">0</div></div>
       </div>
 
+      <div class="sec">Configurar WiFi</div>
+      <div class="wifi-card">
+        <div class="wifi-row">
+          <input type="text" class="inp" id="wifi-ssid" placeholder="SSID da rede" autocomplete="off" autocorrect="off" spellcheck="false" />
+        </div>
+        <div class="wifi-row">
+          <input type="password" class="inp" id="wifi-password" placeholder="Senha" autocomplete="new-password" />
+        </div>
+        <button class="bp bp-p" onclick="wifiConnect()">Conectar</button>
+        <div class="ap-sub" id="wifi-status-msg">Digite SSID e senha para conectar à nova rede.</div>
+      </div>
+
       <div class="sec">Serviços</div>
       <div class="drv-row"><span class="dot dx" id="svc-dot-indiweb"></span><div class="drv-txt"><div class="drv-name">INDI Web Manager</div><div class="drv-sub">:8624</div></div><a href="http://astropi.local:8624" target="_blank" class="bp bp-s sm">Abrir</a></div>
       <div class="drv-row"><span class="dot dx" id="svc-dot-kstars"></span><div class="drv-txt"><div class="drv-name">Xpra · KStars</div><div class="drv-sub">:6080</div></div></div>

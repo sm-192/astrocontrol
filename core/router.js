@@ -38,6 +38,7 @@ const {
   refreshNet,
   toggleAP,
   discoveryMode,
+  connectWifi,
 } = require('../services/network');
 
 /* ── Utils ── */
@@ -159,6 +160,9 @@ function handleMsg(session, msg) {
       discoveryMode(ws, msg.enable);
       break;
 
+    case 'wifi_connect':
+      connectWifi(ws, msg.ssid, msg.password);
+      break;
 
     /* ── Estado ── */
     case 'get_state':

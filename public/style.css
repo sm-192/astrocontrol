@@ -811,6 +811,26 @@ body {
 .ap-detail { opacity:0.3; transition:opacity .3s; }
 .ap-detail.visible { opacity:1; }
 
+.wifi-card {
+  display: flex; flex-direction: column; gap: 10px;
+  padding: 12px;
+  background: var(--bg2);
+  border: .5px solid var(--border);
+  border-radius: 11px;
+}
+.wifi-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.wifi-card .inp {
+  width: 100%;
+}
+#wifi-status-msg {
+  font-size: 11px;
+  color: var(--muted);
+}
+
 .ptr-spinner {
   position: fixed; top: 0; left: 50%; 
   transform: translate(-50%, -70px); 

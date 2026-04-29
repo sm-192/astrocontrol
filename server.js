@@ -2,16 +2,14 @@
 
 /**
  * AstroControl — server.js (modular)
- * Arquivo principal: inicializa HTTP + WebSocket
  */
 
 const express = require('express');
 const http    = require('http');
-const path    = require('path');
 
-const CFG              = require('./config/config');
-const routes           = require('./api/routes');
-const setupWebSocket   = require('./core/websocket');
+const CFG            = require('./config/config');
+const routes         = require('./api/routes');
+const setupWebSocket = require('./core/websocket');
 
 /* ══════════════════════════════════════════════
    EXPRESS
@@ -22,13 +20,8 @@ const app = express();
 app.use(express.json());
 app.use(express.static(CFG.PUBLIC_DIR));
 
-/* Rotas REST */
+/* Rotas REST + SPA fallback */
 app.use('/', routes);
-
-/* Fallback SPA */
-app.get('*', (_, res) => {
-  res.sendFile(path.join(CFG.PUBLIC_DIR, 'index.html'));
-});
 
 /* ══════════════════════════════════════════════
    HTTP SERVER
