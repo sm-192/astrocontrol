@@ -729,23 +729,23 @@ body {
 
 
 /* ══════════════════════════════════════
-   ABAS noVNC (KStars, PHD2, Desktop, Terminal)
+   ABAS REMOTAS (KStars, PHD2, Desktop, Terminal)
    ══════════════════════════════════════ */
-.novnc-bar {
+.remote-bar {
   display:flex; align-items:center; justify-content:space-between;
   padding:8px 12px; background:var(--bg1); border-bottom:.5px solid var(--border);
   flex-shrink:0; gap:8px;
 }
-.novnc-bar-left  { display:flex; align-items:center; gap:8px; min-width:0; }
-.novnc-bar-right { display:flex; align-items:center; gap:6px; flex-shrink:0; }
-.novnc-title { font-size:12px; color:#9ca3b0; white-space:nowrap; }
+.remote-bar-left  { display:flex; align-items:center; gap:8px; min-width:0; }
+.remote-bar-right { display:flex; align-items:center; gap:6px; flex-shrink:0; }
+.remote-title { font-size:12px; color:#9ca3b0; white-space:nowrap; }
 
-.novnc-frame {
+.remote-frame {
   flex:1; min-height:0; background:var(--bg3);
   display:flex; align-items:center; justify-content:center; overflow:hidden;
   position:relative;
 }
-.novnc-frame iframe { width:100%; height:100%; border:none; background:#000; }
+.remote-frame iframe { width:100%; height:100%; border:none; background:#000; }
 
 /* Aviso de rotação — portrait only */
 .rotate-hint {
@@ -869,11 +869,11 @@ body {
    ══════════════════════════════════════ */
 
 /* ══════════════════════════════════════
-   XPRA TOUCH LAYER
+   REMOTE TOUCH LAYER
    ══════════════════════════════════════ */
 
 /* Wrapper que recebe gestos touch e contém o iframe */
-.xpra-touch-layer {
+.remote-touch-layer {
   position: relative;
   width: 100%;
   height: 100%;
@@ -889,7 +889,7 @@ body {
 
 /* O iframe dentro da touch layer: pointer-events desabilitado para que
    os toques sejam interceptados pela layer, não pelo iframe diretamente */
-.xpra-touch-layer iframe {
+.remote-touch-layer iframe {
   pointer-events: none;
   position: absolute;
   top: 0;
@@ -900,23 +900,23 @@ body {
 }
 
 /* Feedback visual de clique direito (long press) */
-.xpra-rightclick-flash::after {
+.remote-rightclick-flash::after {
   content: '';
   position: absolute;
   inset: 0;
   background: rgba(239, 159, 39, 0.15);
   pointer-events: none;
   border-radius: 4px;
-  animation: xpra-flash 0.2s ease-out forwards;
+  animation: remote-flash 0.2s ease-out forwards;
 }
 
-@keyframes xpra-flash {
+@keyframes remote-flash {
   from { opacity: 1; }
   to   { opacity: 0; }
 }
 
 /* Indicador de zoom ativo (aparece brevemente no canto) */
-.xpra-zoom-badge {
+.remote-zoom-badge {
   position: absolute;
   bottom: 8px;
   right: 8px;
@@ -932,6 +932,6 @@ body {
   transition: opacity 0.3s;
   z-index: 10;
 }
-.xpra-zoom-badge.visible {
+.remote-zoom-badge.visible {
   opacity: 1;
 }

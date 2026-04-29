@@ -4,7 +4,7 @@
  * WebSocket com backoff e heartbeat
  * Fila de comandos offline
  * Auth segura do terminal via POST
- * Fullscreen para abas noVNC
+ * Fullscreen para abas remotas
  */
 
 'use strict';
@@ -687,7 +687,7 @@ function sw(id, el) {
  * Tenta fullscreen nativo (oculta barra de endereço).
  * Se não disponível, cria overlay que cobre toda a tela.
  *
- * Para abas noVNC usa o frame existente.
+ * Para abas remotas usa o frame existente.
  * Para abas nativas (mount, align, drivers, network) clona o conteúdo.
  */
 function enterFullscreen(panelId) {
@@ -734,7 +734,7 @@ function _showFsOverlay(panelId) {
   exitBtn.onclick = () => overlay.remove();
   overlay.appendChild(exitBtn);
 
-  /* Para painéis noVNC: move o iframe para o overlay */
+  /* Para painéis remotos: move o iframe para o overlay */
   const frameId = panelId === 'p-kstars' ? 'vnc-k-frame' :
     panelId === 'p-phd2' ? 'vnc-p-frame' :
       panelId === 'p-desktop' ? 'vnc-d-frame' :
@@ -777,7 +777,7 @@ function _showFsOverlay(panelId) {
 }
 
 function requestFullscreenPanel(frameId) {
-  /* Atalho para abas noVNC — mantém compatibilidade */
+  /* Atalho para abas remotas — mantém compatibilidade */
   const map = {
     'vnc-k-frame': 'p-kstars', 'vnc-p-frame': 'p-phd2',
     'vnc-d-frame': 'p-desktop', 'term-frame': 'p-terminal',
@@ -1257,7 +1257,7 @@ document.addEventListener('dblclick', (e) => {
 });
 
 /* ══════════════════════════════════════════════
-   noVNC / TERMINAL
+   REMOTE / TERMINAL
    ══════════════════════════════════════════════ */
 
 /* ─── mapa frameId → id do rotate-hint ─── */
@@ -1320,14 +1320,14 @@ function renderGpsSatIndicator() {
 }
 
 /* ══════════════════════════════════════════════
-   XPRA — Dynamic resize + touch layer
+   REMOTE — Dynamic resize + touch layer
    ══════════════════════════════════════════════
 
    Arquitetura:
-   ┌─ .novnc-frame (frameId) ──────────────────┐
-   │  ┌─ .xpra-touch-layer ──────────────────┐ │
+   ┌─ .remote-frame (frameId) ──────────────────┐
+   │  ┌─ .remote-touch-layer ──────────────────┐ │
    │  │  (captura touch, aplica transform)   │ │
-   │  │  ┌─ iframe (Xpra HTML5 client) ───┐  │ │
+   │  │  ┌─ iframe (cliente HTML5 remoto) ──┐  │ │
    │  │  │  sessão remota escalada        │  │ │
    │  │  └────────────────────────────────┘  │ │
    │  └──────────────────────────────────────┘ │
@@ -1342,12 +1342,12 @@ function renderGpsSatIndicator() {
    - 1 dedo pan (após tap) → move mouse remoto
    ══════════════════════════════════════════════ */
 
-/* Registro de sessões Xpra ativas: frameId → { port, statusId, auth, resizeTimer, observer } */
-const XPRA_SESSIONS = new Map();
+/* Registro de sessões remotas ativas: frameId → { port, statusId, auth, resizeTimer, observer } */
+const REMOTE_SESSIONS = new Map();
 
 /**
  * Mede as dimensões reais do container do frame no momento da chamada.
- * Usa o elemento pai (.novnc-frame) para pegar a área disponível real.
+ * Usa o elemento pai (.remote-frame) para pegar a área disponível real.
  */
 function getDisplayParams(containerEl) {
   const dpr  = window.devicePixelRatio || 1;
@@ -1362,17 +1362,15 @@ function getDisplayParams(containerEl) {
 }
 
 /**
- * Monta URL para o cliente HTML5 do Xpra.
-/**
- * Monta URL para o Xpra HTML5 client.
- * Conecta diretamente à porta do Xpra (6080/6081/6082).
- * O Xpra HTML5 lê configuração pelo hash fragment da URL.
+ * Monta URL para o cliente HTML5 remoto.
+ * Conecta diretamente à porta do servidor remoto (6080/6081/6082).
+ * O cliente HTML5 lê configuração pelo hash fragment da URL.
  *
- * Parâmetros aceitos pelo xpra-html5:
+ * Parâmetros aceitos pelo cliente HTML5 remoto:
  *   server, port, ssl, encoding, username, password,
  *   dpi, width, height, language, clipboard, floating_menu
  */
-function _xpraUrl(port, w, h, dpi, extraParams) {
+function _remoteClientUrl(port, w, h, dpi, extraParams) {
   const p = {
     server:        WS_HOST,
     port:          String(port),
@@ -1394,20 +1392,20 @@ function _xpraUrl(port, w, h, dpi, extraParams) {
 }
 
 /**
- * Injeta o iframe Xpra dentro de uma camada de touch.
+ * Injeta o iframe remoto dentro de uma camada de touch.
  * Retorna o wrapper criado.
  */
-function _injectXpraIframe(frame, url) {
+function _injectRemoteIframe(frame, url) {
   // Remove conteúdo anterior
   frame.innerHTML = '';
 
   // Wrapper que recebe os gestos touch
   const layer = document.createElement('div');
-  layer.className = 'xpra-touch-layer';
+  layer.className = 'remote-touch-layer';
 
   // Badge de zoom (aparece brevemente ao fazer pinch)
   const badge = document.createElement('div');
-  badge.className = 'xpra-zoom-badge';
+  badge.className = 'remote-zoom-badge';
   badge.textContent = '1×';
   layer.appendChild(badge);
 
@@ -1423,10 +1421,10 @@ function _injectXpraIframe(frame, url) {
 }
 
 /**
- * Conecta (ou reconecta) uma sessão Xpra.
+ * Conecta (ou reconecta) uma sessão remota.
  * Registra observers para resize automático.
  */
-function connectXpra(frameId, statusId, port, extraParams) {
+function connectRemote(frameId, statusId, port, extraParams) {
   const frame  = document.getElementById(frameId);
   const status = document.getElementById(statusId);
   if (!frame) return;
@@ -1434,26 +1432,26 @@ function connectXpra(frameId, statusId, port, extraParams) {
   _hideRotateHint(frameId);
 
   // Cancela observer anterior se existir
-  const prev = XPRA_SESSIONS.get(frameId);
+  const prev = REMOTE_SESSIONS.get(frameId);
   if (prev?.observer) prev.observer.disconnect();
   if (prev?.resizeTimer) clearTimeout(prev.resizeTimer);
 
   const { w, h, dpi } = getDisplayParams(frame);
-  const url = _xpraUrl(port, w, h, dpi, extraParams || {});
+  const url = _remoteClientUrl(port, w, h, dpi, extraParams || {});
 
-  const { layer } = _injectXpraIframe(frame, url);
+  const { layer } = _injectRemoteIframe(frame, url);
   if (status) status.textContent = 'Conectado';
 
   // Salva sessão (guarda port para reconstruir URL no resize)
   const session = { port, statusId, extraParams: extraParams || {}, lastW: w, lastH: h };
-  XPRA_SESSIONS.set(frameId, session);
+  REMOTE_SESSIONS.set(frameId, session);
 
   // Instala touch layer
   _installTouchLayer(layer, frame);
 
   // Observer de resize do container
   if (typeof ResizeObserver !== 'undefined') {
-    const observer = new ResizeObserver(() => _onXpraContainerResize(frameId));
+    const observer = new ResizeObserver(() => _onRemoteContainerResize(frameId));
     observer.observe(frame);
     session.observer = observer;
   }
@@ -1463,8 +1461,8 @@ function connectXpra(frameId, statusId, port, extraParams) {
  * Chamado pelo ResizeObserver ou pelo evento de orientação.
  * Reconecta apenas se a mudança de tamanho for significativa (>5%).
  */
-function _onXpraContainerResize(frameId) {
-  const session = XPRA_SESSIONS.get(frameId);
+function _onRemoteContainerResize(frameId) {
+  const session = REMOTE_SESSIONS.get(frameId);
   if (!session) return;
 
   clearTimeout(session.resizeTimer);
@@ -1487,8 +1485,8 @@ function _onXpraContainerResize(frameId) {
     session.lastH = h;
 
     // Reconecta com novas dimensões
-    const url = _xpraUrl(session.port, w, h, dpi, session.extraParams);
-    const { layer } = _injectXpraIframe(frame, url);
+    const url = _remoteClientUrl(session.port, w, h, dpi, session.extraParams);
+    const { layer } = _injectRemoteIframe(frame, url);
     _installTouchLayer(layer, frame);
 
     const status = document.getElementById(session.statusId);
@@ -1497,15 +1495,15 @@ function _onXpraContainerResize(frameId) {
 }
 
 /** Registra listeners globais de resize/orientation uma única vez */
-function _xpraGlobalResizeInit() {
+function _remoteGlobalResizeInit() {
   let lastOrientation = screen.orientation?.type || '';
 
   const onOrientationChange = () => {
     const newOrientation = screen.orientation?.type || '';
     if (newOrientation === lastOrientation) return;
     lastOrientation = newOrientation;
-    // Reconecta todos os painéis Xpra visíveis
-    XPRA_SESSIONS.forEach((_, frameId) => _onXpraContainerResize(frameId));
+    // Reconecta todos os painéis remotos visíveis
+    REMOTE_SESSIONS.forEach((_, frameId) => _onRemoteContainerResize(frameId));
   };
 
   screen.orientation?.addEventListener('change', onOrientationChange);
@@ -1516,13 +1514,13 @@ function _xpraGlobalResizeInit() {
   window.addEventListener('resize', () => {
     clearTimeout(winResizeTimer);
     winResizeTimer = setTimeout(() => {
-      XPRA_SESSIONS.forEach((_, frameId) => _onXpraContainerResize(frameId));
+      REMOTE_SESSIONS.forEach((_, frameId) => _onRemoteContainerResize(frameId));
     }, 300);
   });
 }
 
 /* ──────────────────────────────────────────────
-   TOUCH LAYER — gestos sobre o iframe Xpra
+   TOUCH LAYER — gestos sobre o iframe remoto
    ────────────────────────────────────────────── */
 
 /**
@@ -1538,7 +1536,7 @@ function _xpraGlobalResizeInit() {
  *
  * Estratégia: a touch-layer fica sobre o iframe com pointer-events:none
  * no iframe. Os eventos são traduzidos para mouse events sintéticos
- * despachados sobre o iframe (que o Xpra HTML5 client processa).
+ * despachados sobre o iframe (que o cliente HTML5 remoto processa).
  */
 function _installTouchLayer(layer, frame) {
   // Remove listeners anteriores clonando o elemento
@@ -1597,7 +1595,7 @@ function _installTouchLayer(layer, frame) {
         button: button || 0, buttons: type === 'mousedown' ? 1 : 0,
         view: iframe.contentWindow,
       }));
-    } catch { /* cross-origin — Xpra usa mesmo host, mas pode falhar */ }
+    } catch { /* cross-origin — cliente remoto usa mesmo host, mas pode falhar */ }
   }
 
   /** Despacha wheel event (scroll) no iframe */
@@ -1623,7 +1621,7 @@ function _installTouchLayer(layer, frame) {
     iframe.style.width           = `${100 / currentScale}%`;
     iframe.style.height          = `${100 / currentScale}%`;
     // Atualiza badge de zoom
-    const badge = layer.querySelector('.xpra-zoom-badge');
+    const badge = layer.querySelector('.remote-zoom-badge');
     if (badge) {
       badge.textContent = `${currentScale.toFixed(1)}×`;
       badge.classList.add('visible');
@@ -1653,8 +1651,8 @@ function _installTouchLayer(layer, frame) {
         const pos = getPos(t, layer);
         sendMouseEvent('contextmenu', pos.x, pos.y, 2);
         // Feedback visual
-        layer.classList.add('xpra-rightclick-flash');
-        setTimeout(() => layer.classList.remove('xpra-rightclick-flash'), 200);
+        layer.classList.add('remote-rightclick-flash');
+        setTimeout(() => layer.classList.remove('remote-rightclick-flash'), 200);
       }, 500);
 
     } else if (ids.length === 2) {
@@ -1762,8 +1760,8 @@ function _installTouchLayer(layer, frame) {
 }
 
 function connectVNC(frameId, statusId, port) {
-  // Alias mantido por compatibilidade — redireciona para Xpra
-  connectXpra(frameId, statusId, port);
+  // Alias mantido por compatibilidade — redireciona para a conexão remota
+  connectRemote(frameId, statusId, port);
 }
 
 function showAuth(type) {
@@ -1802,7 +1800,7 @@ async function doAuth(type) {
     const user   = ($('user-desktop')?.value || '').trim() || 'samu192';
     const pwd    = $('pwd-desktop')?.value || '';
     if (!pwd) { if (errEl) errEl.textContent = 'Digite a senha.'; return; }
-    connectXpra('vnc-d-frame', 'vnc-d-status', 6082, {
+    connectRemote('vnc-d-frame', 'vnc-d-status', 6082, {
       username: user,
       password: pwd,
       sharing:  '0',
@@ -1951,4 +1949,4 @@ connectWS();
 connectSensors();
 requestAnimationFrame(tickClock);
 scheduleRender();
-_xpraGlobalResizeInit();
+_remoteGlobalResizeInit();
