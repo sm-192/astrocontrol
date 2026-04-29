@@ -24,14 +24,19 @@ if [ "$AVAILABLE_NETWORKS" -gt 0 ]; then
     # Tenta conectar automaticamente a redes conhecidas
     nmcli con up --ask no 2>/dev/null
 
-    # Verifica se conectou
-    sleep 5
-    WIFI_STATUS=$(nmcli -t -g DEVICE,STATE dev | grep "^wlan0:connected")
+    # Verifica rapidamente se conectou (timeout curto para não perder acesso)
+    for j in $(seq 1 10); do
+        WIFI_STATUS=$(nmcli -t -g DEVICE,STATE dev | grep "^wlan0:connected")
+        if [ ! -z "$WIFI_STATUS" ]; then
+            echo "$LOG Conectado com sucesso a rede conhecida!"
+            exit 0
+        fi
+        sleep 1
+    done
 
-    if [ ! -z "$WIFI_STATUS" ]; then
-        echo "$LOG Conectado com sucesso a rede conhecida!"
-        exit 0
-    fi
+    # Se não conectou, reativa AP imediatamente para não perder acesso
+    echo "$LOG Não conectou - reativando AP para manter acesso..."
+    nmcli con up AstroPi-AP
 fi
 
 # Loop de verificação para novas conexões

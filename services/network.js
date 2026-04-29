@@ -102,26 +102,55 @@ function toggleAP(ws, enable) {
 /* Modo descoberta para conectar a novas redes */
 function discoveryMode(ws, enable) {
   if (enable) {
-    // Desativa AP temporariamente para permitir scan
-    exec('nmcli con down AstroPi-AP', { timeout: 5000 }, (err) => {
-      if (err) {
-        log(ws, 'er', `Modo descoberta falhou: ${err.message}`);
+    // Verifica se AP está ativo
+    exec('nmcli -t -f NAME,STATE con show --active', (err, stdout) => {
+      const apActive = stdout.includes('AstroPi-AP');
+
+      if (!apActive) {
+        log(ws, 'dim', 'AP já está desativado - modo descoberta não necessário');
         return;
       }
 
-      log(ws, 'ok', 'Modo descoberta ativado - AP desativado temporariamente');
+      log(ws, 'ok', 'Iniciando modo descoberta...');
 
-      // Reativa AP automaticamente após 2 minutos se não conectar
-      setTimeout(() => {
-        exec('nmcli con up AstroPi-AP', { timeout: 5000 }, (err2) => {
-          if (!err2) {
-            log(ws, 'dim', 'Modo descoberta expirado - AP reativado');
-            refreshNet(ws);
-          }
-        });
-      }, 120000);
+      // Desativa AP temporariamente
+      exec('nmcli con down AstroPi-AP', { timeout: 5000 }, (err) => {
+        if (err) {
+          log(ws, 'er', `Falha ao desativar AP: ${err.message}`);
+          return;
+        }
 
-      refreshNet(ws);
+        log(ws, 'ok', 'AP desativado - você tem 30 segundos para conectar a uma rede');
+
+        // Timer para reativar AP automaticamente
+        const reactivationTimer = setTimeout(() => {
+          exec('nmcli con up AstroPi-AP', { timeout: 5000 }, (err2) => {
+            if (!err2) {
+              log(ws, 'dim', 'Modo descoberta expirado - AP reativado automaticamente');
+              refreshNet(ws);
+            }
+          });
+        }, 30000); // 30 segundos
+
+        // Monitora conexão STA por 30 segundos
+        let attempts = 0;
+        const checkConnection = () => {
+          attempts++;
+          exec('nmcli -t -g DEVICE,STATE dev | grep "^wlan0:connected"', (err, stdout) => {
+            if (stdout.trim()) {
+              // Conectou! Cancela timer e mantém STA
+              clearTimeout(reactivationTimer);
+              log(ws, 'ok', 'Conexão STA detectada - mantendo rede WiFi');
+              refreshNet(ws);
+            } else if (attempts < 30) {
+              setTimeout(checkConnection, 1000);
+            }
+          });
+        };
+
+        checkConnection();
+        refreshNet(ws);
+      });
     });
   } else {
     // Reativa AP imediatamente
