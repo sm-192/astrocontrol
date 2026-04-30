@@ -51,9 +51,13 @@
       <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.3"><rect x="2" y="3" width="10" height="8" rx="1.5"/><circle cx="7" cy="7" r="2.2"/><path d="M4.5 3l.8-1h3.4l.8 1"/></svg>
       <span class="tab-label">Sessão</span>
     </div>
-    <div class="tab" onclick="sw('desktop',this)" title="KasmVNC">
+    <div class="tab" onclick="sw('desktop',this)" title="Desktop">
       <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.3"><rect x="1" y="2" width="12" height="8" rx="1"/><line x1="5" y1="12" x2="9" y2="12"/><line x1="7" y1="10" x2="7" y2="12"/></svg>
-      <span class="tab-label">KasmVNC</span>
+      <span class="tab-label">Desktop</span>
+    </div>
+    <div class="tab" onclick="sw('kstars',this)" title="KStars">
+      <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M7 1.5l1.4 3 3.3.4-2.4 2.2.6 3.2L7 8.8l-2.9 1.5.6-3.2L2.3 4.9l3.3-.4L7 1.5z"/></svg>
+      <span class="tab-label">KStars</span>
     </div>
     <div class="tab" onclick="sw('terminal',this)" title="Terminal SSH">
       <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.3"><rect x="1" y="2" width="12" height="10" rx="1.5"/><polyline points="3,6 5,8 3,10"/><line x1="6" y1="10" x2="11" y2="10"/></svg>
@@ -658,6 +662,36 @@
       </div>
     </div>
 
+    <!-- ══════════ KSTARS ══════════ -->
+    <div id="p-kstars" class="panel panel-remote">
+      <div class="remote-bar">
+        <div class="remote-bar-left">
+          <span class="remote-title">KStars</span>
+          <span class="badge badge-purple" id="remote-kstars-status">Desconectado</span>
+        </div>
+        <div class="remote-bar-right">
+          <button class="bp bp-s sm" onclick="requestFullscreenPanel('remote-kstars-frame')">⛶ Tela cheia</button>
+          <button class="bp bp-p sm" onclick="connectRemote('remote-kstars-frame','remote-kstars-status',8444)">Conectar</button>
+        </div>
+      </div>
+      <div class="rotate-hint" id="rotate-kstars">
+        <div class="rotate-hint-inner">
+          <svg width="48" height="48" viewBox="0 0 48 48" fill="none" stroke="#AFA9EC" stroke-width="1.5"><rect x="4" y="10" width="40" height="28" rx="3"/><line x1="4" y1="20" x2="44" y2="20"/><circle cx="10" cy="15" r="2" fill="#AFA9EC"/><circle cx="16" cy="15" r="2" fill="#AFA9EC"/></svg>
+          <p>Gire o dispositivo para paisagem</p>
+          <p class="rotate-sub">KStars funciona melhor em modo horizontal</p>
+          <button class="bp bp-s sm" style="margin-top:12px" onclick="connectRemote('remote-kstars-frame','remote-kstars-status',8444)">Conectar assim mesmo</button>
+        </div>
+      </div>
+      <div class="remote-frame" id="remote-kstars-frame">
+        <div class="remote-placeholder">
+          <svg width="28" height="28" viewBox="0 0 32 32" fill="none" stroke="#374151" stroke-width="1.5" style="margin:0 auto 10px;display:block"><circle cx="16" cy="16" r="10"/><path d="M16 7l2.2 5 5.4.6-4 3.7 1 5.4-4.6-2.7-4.6 2.7 1-5.4-4-3.7 5.4-.6L16 7z"/></svg>
+          <p>KStars</p>
+          <p class="remote-placeholder-sub">astropi.local:8444</p>
+          <button class="bp bp-p remote-placeholder-btn" onclick="connectRemote('remote-kstars-frame','remote-kstars-status',8444)">Conectar</button>
+        </div>
+      </div>
+    </div>
+
     <!-- ══════════ TERMINAL ══════════ -->
     <div id="p-terminal" class="panel panel-remote">
       <div class="remote-bar">
@@ -762,6 +796,7 @@
       <div class="sec">Serviços</div>
       <div class="drv-row"><span class="dot dx" id="svc-dot-indiweb"></span><div class="drv-txt"><div class="drv-name">INDI Web Manager</div><div class="drv-sub">:8624</div></div><a href="http://astropi.local:8624" target="_blank" class="bp bp-s sm">Abrir</a></div>
       <div class="drv-row"><span class="dot dx" id="svc-dot-kasmvnc"></span><div class="drv-txt"><div class="drv-name">KasmVNC</div><div class="drv-sub">:8443</div></div></div>
+      <div class="drv-row"><span class="dot dx" id="svc-dot-kstars"></span><div class="drv-txt"><div class="drv-name">KStars KasmVNC</div><div class="drv-sub">:8444</div></div></div>
       <div class="drv-row"><span class="dot dx" id="svc-dot-phd2"></span><div class="drv-txt"><div class="drv-name">PHD2 API</div><div class="drv-sub">:4400</div></div></div>
       <div class="drv-row"><span class="dot dx" id="svc-dot-ttyd"></span><div class="drv-txt"><div class="drv-name">ttyd · Terminal</div><div class="drv-sub">:7681</div></div></div>
       <div class="drv-row"><span class="dot dx" id="svc-dot-gpsd"></span><div class="drv-txt"><div class="drv-name">gpsd</div><div class="drv-sub">:2947</div></div></div>

@@ -625,6 +625,7 @@ const WS_HOST = window.location.hostname || 'astropi.local';
 const WS_PORT = parseInt(window.location.port) || 3000;
 const WS_URL = `ws://${WS_HOST}:${WS_PORT}/ws`;
 const KASMVNC_PORT = 8443;
+const KSTARS_VNC_PORT = 8444;
 
 let ws = null;
 let wsBackoff = 1000;
@@ -984,6 +985,7 @@ function _showFsOverlay(panelId) {
 
   /* Para painéis remotos: move o iframe para o overlay */
   const frameId = panelId === 'p-desktop' ? 'remote-d-frame' :
+    panelId === 'p-kstars' ? 'remote-kstars-frame' :
     panelId === 'p-terminal' ? 'term-frame' : null;
 
   if (frameId) {
@@ -1024,7 +1026,9 @@ function _showFsOverlay(panelId) {
 
 function requestFullscreenPanel(frameId) {
   const map = {
-    'remote-d-frame': 'p-desktop', 'term-frame': 'p-terminal',
+    'remote-d-frame': 'p-desktop',
+    'remote-kstars-frame': 'p-kstars',
+    'term-frame': 'p-terminal',
   };
   enterFullscreen(map[frameId] || frameId);
 }
@@ -1593,6 +1597,7 @@ document.addEventListener('dblclick', (e) => {
 /* ─── mapa frameId → id do rotate-hint ─── */
 const _rotateHintMap = {
   'remote-d-frame': 'rotate-desktop',
+  'remote-kstars-frame': 'rotate-kstars',
 };
 
 /** Esconde o rotate-hint para que o iframe fique acessível em portrait */
@@ -1792,6 +1797,9 @@ async function doAuth(type) {
   } else if (type === 'desktop') {
     connectRemote('remote-d-frame', 'remote-d-status', KASMVNC_PORT);
     _hideRotateHint('remote-d-frame');
+  } else if (type === 'kstars') {
+    connectRemote('remote-kstars-frame', 'remote-kstars-status', KSTARS_VNC_PORT);
+    _hideRotateHint('remote-kstars-frame');
   }
 }
 
