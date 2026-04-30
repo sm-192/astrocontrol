@@ -35,6 +35,7 @@ function isDynamic(url) {
     url.protocol === 'ws:'   ||
     url.protocol === 'wss:'  ||
     url.port === '8443'      ||
+    url.port === '4400'      ||
     url.port === '7681'      ||
     url.port === '8624'      ||
     url.port === '8765'      ||

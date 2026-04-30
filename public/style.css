@@ -545,6 +545,69 @@ body {
 .goto-status { font-size:11px; min-height:16px; font-variant-numeric:tabular-nums; margin-top:-2px; }
 
 /* ══════════════════════════════════════
+   CAPTURA / GUIDING
+   ══════════════════════════════════════ */
+.capture-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(220px, 320px);
+  gap: 10px;
+  min-height: 0;
+}
+@media (max-width: 760px), (orientation: portrait) {
+  .capture-layout { grid-template-columns: 1fr; }
+}
+.capture-viewer {
+  position: relative;
+  min-height: 260px;
+  aspect-ratio: 4 / 3;
+  background: #010306;
+  border: .5px solid rgba(255,255,255,.07);
+  border-radius: 9px;
+  overflow: hidden;
+}
+.capture-preview-canvas {
+  width: 100%;
+  height: 100%;
+  display: none;
+  object-fit: contain;
+}
+.capture-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: var(--bg2);
+  border: .5px solid var(--border);
+  border-radius: 9px;
+  padding: 10px;
+}
+.capture-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 7px;
+}
+@media (max-width: 420px) {
+  .capture-grid { grid-template-columns: 1fr; }
+}
+.sequence-status {
+  min-height: 18px;
+  font-size: 11px;
+  color: var(--muted);
+}
+.guiding-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 7px;
+}
+@media (max-width: 520px) {
+  .guiding-grid { grid-template-columns: 1fr; }
+}
+.guiding-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+/* ══════════════════════════════════════
    SECTION LABELS + CARDS
    ══════════════════════════════════════ */
 .sec { font-size:10px; letter-spacing:.07em; color:var(--dim); text-transform:uppercase; margin-bottom:4px; margin-top:2px; flex-shrink:0; }

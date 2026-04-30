@@ -56,6 +56,7 @@ async function refreshNet(ws) {
   const ports = {
     indiweb: 8624,
     kasmvnc: 8443,
+    phd2: 4400,
     ttyd: 7681,
     gpsd: 2947,
     bridge: 3000

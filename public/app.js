@@ -31,6 +31,7 @@ const STATE = {
   network: { mode: '--', ip: '--', ssid: '--', signal: '--', ap_active: false, ap_clients: 0, services: {}, wifi_status: '' },
   drivers: [],
   indiserver: false,
+  phd2: { online: false, connected: false, appState: 'offline', equipment: null, exposure: null, error: null },
   logs: [],
   customDrivers: [],
   devicePorts: {},
@@ -72,6 +73,8 @@ function render() {
   renderGpsSatIndicator();
 
   if (STATE.currentTab === 'mount') renderMount();
+  if (STATE.currentTab === 'capture') renderCapture();
+  if (STATE.currentTab === 'guiding') renderGuiding();
   if (STATE.currentTab === 'drivers') renderDrivers();
   if (STATE.currentTab === 'network') renderNetwork();
 
@@ -279,6 +282,51 @@ function renderCameraMini(c) {
   const gainInp = $('cam-gain');
   if (expInp  && expInp  !== document.activeElement && c.exposure != null) expInp.value  = c.exposure;
   if (gainInp && gainInp !== document.activeElement && c.gain     != null) gainInp.value = c.gain;
+}
+
+function renderCapture() {
+  const c = STATE.devices.camera;
+  renderCameraMini(c);
+  syncCaptureInputs(c);
+
+  const seqBtn = $('seq-btn');
+  if (seqBtn) seqBtn.textContent = SEQ.running ? 'Parar sequência' : 'Iniciar sequência';
+  const seqStatus = $('seq-status');
+  if (seqStatus) seqStatus.textContent = SEQ.running
+    ? `Sequência ${SEQ.done}/${SEQ.total}`
+    : SEQ.done > 0 ? `Última sequência: ${SEQ.done}/${SEQ.total}` : 'Pronto';
+}
+
+function syncCaptureInputs(c) {
+  const pairs = [
+    ['cam-exp', 'cap-exp', c.exposure],
+    ['cam-gain', 'cap-gain', c.gain],
+  ];
+
+  pairs.forEach(([a, b, value]) => {
+    const ea = $(a);
+    const eb = $(b);
+    if (value != null) {
+      if (ea && ea !== document.activeElement) ea.value = value;
+      if (eb && eb !== document.activeElement) eb.value = value;
+    }
+  });
+}
+
+function renderGuiding() {
+  const p = STATE.phd2;
+  setText('phd2-online', p.online ? (p.connected ? 'Conectado' : 'Online') : 'Offline');
+  setText('phd2-state', p.error || p.appState || '--');
+  setText('phd2-exposure', p.exposure != null ? `${p.exposure} ms` : '--');
+
+  const eq = p.equipment;
+  const eqText = eq
+    ? Object.entries(eq)
+        .filter(([, v]) => v && v.name)
+        .map(([k, v]) => `${k}: ${v.name}${v.connected ? '' : ' off'}`)
+        .join(' · ')
+    : '--';
+  setText('phd2-equipment', eqText || '--');
 }
 
 function renderDrivers() {
@@ -591,6 +639,19 @@ function handleMsg(msg) {
       onCameraImage(msg);
       break;
 
+    case 'phd2_status':
+      setState({
+        phd2: {
+          online: !!msg.online,
+          connected: !!msg.connected,
+          appState: msg.appState || 'offline',
+          equipment: msg.equipment || null,
+          exposure: msg.exposure ?? null,
+          error: msg.error || null,
+        }
+      });
+      break;
+
     case 'log':
       addLog(msg.level, msg.text);
       break;
@@ -697,8 +758,9 @@ function sw(id, el) {
   if (id === 'align') { if (typeof renderAlign === 'function') renderAlign(); }
   if (id === 'network') sendCmd({ type: 'network_status' }, false);
   if (id === 'drivers') sendCmd({ type: 'get_state' }, false);
+  if (id === 'guiding') refreshPHD2();
   // Pausa framing ao sair da aba de montagem
-  if (id !== 'mount' && CAM.mode === 'framing') _stopFraming();
+  if (id !== 'mount' && id !== 'capture' && CAM.mode === 'framing') _stopFraming();
 }
 
 /* ══════════════════════════════════════════════
@@ -917,22 +979,25 @@ function rotGotoInput() {
 
 /* ── Câmera: render preview da imagem INDI BLOB ── */
 function renderCameraPreview(msg) {
-  const canvas  = $('cam-preview-canvas');
-  const holder  = $('cam-preview-placeholder');
-  if (!canvas) return;
+  const targets = [
+    { canvas: $('cam-preview-canvas'), holder: $('cam-preview-placeholder') },
+    { canvas: $('capture-preview-canvas'), holder: $('capture-preview-placeholder') },
+  ].filter(t => t.canvas);
 
   // FITS: enviamos base64 raw — renderiza como escala de cinza simples
   // JPEG/PNG: carrega direto via Image
   if (msg.format === 'fits') {
-    _renderFitsPreview(msg.data, canvas, holder);
+    targets.forEach(({ canvas, holder }) => _renderFitsPreview(msg.data, canvas, holder));
   } else {
     const img = new Image();
     img.onload = () => {
-      canvas.width  = img.naturalWidth;
-      canvas.height = img.naturalHeight;
-      canvas.getContext('2d').drawImage(img, 0, 0);
-      canvas.style.display = 'block';
-      if (holder) holder.style.display = 'none';
+      targets.forEach(({ canvas, holder }) => {
+        canvas.width  = img.naturalWidth;
+        canvas.height = img.naturalHeight;
+        canvas.getContext('2d').drawImage(img, 0, 0);
+        canvas.style.display = 'block';
+        if (holder) holder.style.display = 'none';
+      });
     };
     img.src = `data:image/${msg.format};base64,${msg.data}`;
   }
@@ -1021,6 +1086,13 @@ const CAM = {
   framingWatchdog: null,
 };
 
+const SEQ = {
+  running: false,
+  total: 0,
+  done: 0,
+  delayTimer: null,
+};
+
 /* Chamado pelo server quando chega um BLOB (camera_image) */
 function onCameraImage(msg) {
   renderCameraPreview(msg);
@@ -1032,6 +1104,7 @@ function onCameraImage(msg) {
     CAM.mode = 'idle';
     _stopExpBar();
     _updateCamButtons();
+    _onSequenceFrameDone();
   }
 }
 
@@ -1067,8 +1140,7 @@ function _stopFraming() {
 
 function _shootFrame() {
   clearTimeout(CAM.framingWatchdog);
-  const exp  = parseFloat($('cam-exp')?.value)  || 1;
-  const gain = parseInt($('cam-gain')?.value)    || 100;
+  const { exp, gain } = _cameraParams();
   _startExpBar(exp);
   sendCmd({ type: 'camera_capture', exposure: exp, gain });
   _armFramingWatchdog(exp);
@@ -1099,8 +1171,7 @@ function toggleCapture() {
 
 function _startCapture() {
   CAM.mode = 'capturing';
-  const exp  = parseFloat($('cam-exp')?.value)  || 1;
-  const gain = parseInt($('cam-gain')?.value)    || 100;
+  const { exp, gain } = _cameraParams();
   _startExpBar(exp);
   _updateCamButtons();
   sendCmd({ type: 'camera_capture', exposure: exp, gain });
@@ -1171,6 +1242,95 @@ function _updateCamButtons() {
   if (cBtn) cBtn.disabled = isFraming;
   if (fBtn) fBtn.style.opacity = isCapturing ? '.4' : '1';
   if (cBtn) cBtn.style.opacity = isFraming   ? '.4' : '1';
+
+  const cfBtn = $('cap-framing-btn');
+  const ccBtn = $('cap-capture-btn');
+  if (cfBtn) {
+    cfBtn.classList.toggle('active', isFraming);
+    cfBtn.textContent = isFraming ? 'Parar' : 'Framing';
+    cfBtn.disabled = isCapturing || SEQ.running;
+  }
+  if (ccBtn) {
+    ccBtn.classList.toggle('capturing', isCapturing);
+    ccBtn.textContent = isCapturing ? 'Parar' : 'Capturar';
+    ccBtn.disabled = isFraming || SEQ.running;
+  }
+}
+
+function _cameraParams() {
+  const expRaw = parseFloat(
+    (document.activeElement === $('cap-exp') ? $('cap-exp')?.value : null) ||
+    $('cap-exp')?.value ||
+    $('cam-exp')?.value
+  );
+
+  const gainRaw = parseInt(
+    (document.activeElement === $('cap-gain') ? $('cap-gain')?.value : null) ||
+    $('cap-gain')?.value ||
+    $('cam-gain')?.value
+  );
+
+  const exp = Number.isFinite(expRaw) && expRaw > 0 ? expRaw : 1;
+  const gain = Number.isFinite(gainRaw) && gainRaw >= 0 ? gainRaw : 100;
+
+  const camExp = $('cam-exp');
+  const capExp = $('cap-exp');
+  const camGain = $('cam-gain');
+  const capGain = $('cap-gain');
+  if (camExp && camExp !== document.activeElement) camExp.value = exp;
+  if (capExp && capExp !== document.activeElement) capExp.value = exp;
+  if (camGain && camGain !== document.activeElement) camGain.value = gain;
+  if (capGain && capGain !== document.activeElement) capGain.value = gain;
+
+  return { exp, gain };
+}
+
+function toggleSequence() {
+  if (SEQ.running) {
+    _stopSequence();
+    return;
+  }
+
+  SEQ.running = true;
+  SEQ.total = Math.max(1, parseInt($('seq-count')?.value) || 1);
+  SEQ.done = 0;
+  _updateCamButtons();
+  scheduleRender();
+  _shootSequenceFrame();
+}
+
+function _shootSequenceFrame() {
+  if (!SEQ.running) return;
+  if (SEQ.done >= SEQ.total) {
+    _stopSequence(false);
+    return;
+  }
+  if (CAM.mode !== 'idle') return;
+  _startCapture();
+}
+
+function _onSequenceFrameDone() {
+  if (!SEQ.running) return;
+
+  SEQ.done += 1;
+  scheduleRender();
+
+  if (SEQ.done >= SEQ.total) {
+    _stopSequence(false);
+    return;
+  }
+
+  const delay = Math.max(0, parseFloat($('seq-delay')?.value) || 0) * 1000;
+  clearTimeout(SEQ.delayTimer);
+  SEQ.delayTimer = setTimeout(_shootSequenceFrame, delay);
+}
+
+function _stopSequence(abort = true) {
+  SEQ.running = false;
+  clearTimeout(SEQ.delayTimer);
+  if (abort && CAM.mode === 'capturing') _stopCapture(true);
+  _updateCamButtons();
+  scheduleRender();
 }
 
 
@@ -1183,6 +1343,42 @@ const DRIVER_MAP = {
   focuser: 'indi_moonlite', filterwheel: 'indi_efw',
   rotator: 'indi_simulator_rotator', gps: 'indi_gpsd', adxl: 'python_bridge',
 };
+
+/* ══════════════════════════════════════════════
+   GUIDING — PHD2
+   ══════════════════════════════════════════════ */
+
+function refreshPHD2() {
+  sendCmd({ type: 'phd2_status' }, false);
+}
+
+function _phd2Settle() {
+  return {
+    pixels: parseFloat($('phd2-settle-px')?.value) || 1.5,
+    time: parseFloat($('phd2-settle-time')?.value) || 8,
+    timeout: parseFloat($('phd2-settle-timeout')?.value) || 60,
+  };
+}
+
+function phd2Loop() {
+  sendCmd({ type: 'phd2_loop' });
+}
+
+function phd2Guide() {
+  sendCmd({ type: 'phd2_guide', ..._phd2Settle() });
+}
+
+function phd2Stop() {
+  sendCmd({ type: 'phd2_stop' });
+}
+
+function phd2Dither() {
+  sendCmd({
+    type: 'phd2_dither',
+    amount: parseFloat($('phd2-dither-amount')?.value) || 3,
+    ..._phd2Settle(),
+  });
+}
 
 function toggleDriver(key) {
   const dev = STATE.devices[key];

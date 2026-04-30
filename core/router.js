@@ -41,6 +41,14 @@ const {
   connectWifi,
 } = require('../services/network');
 
+const {
+  refreshPHD2,
+  phd2Guide,
+  phd2Loop,
+  phd2Stop,
+  phd2Dither,
+} = require('../services/phd2');
+
 /* ── Utils ── */
 const { emit } = require('../utils/emit');
 const {
@@ -134,6 +142,28 @@ function handleMsg(session, msg) {
 
     case 'camera_abort':
       indiCameraAbort(session);
+      break;
+
+
+    /* ── Guiding / PHD2 ── */
+    case 'phd2_status':
+      refreshPHD2(ws);
+      break;
+
+    case 'phd2_loop':
+      phd2Loop(ws, msg.exposureMs);
+      break;
+
+    case 'phd2_guide':
+      phd2Guide(ws, msg);
+      break;
+
+    case 'phd2_stop':
+      phd2Stop(ws);
+      break;
+
+    case 'phd2_dither':
+      phd2Dither(ws, msg);
       break;
 
 

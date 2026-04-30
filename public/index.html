@@ -47,6 +47,14 @@
       <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.3"><circle cx="7" cy="7" r="5"/><circle cx="7" cy="7" r="1.5" fill="currentColor"/><line x1="7" y1="1" x2="7" y2="3"/><line x1="7" y1="11" x2="7" y2="13"/><line x1="1" y1="7" x2="3" y2="7"/><line x1="11" y1="7" x2="13" y2="7"/></svg>
       <span class="tab-label">Polar</span>
     </div>
+    <div class="tab" onclick="sw('capture',this)" title="Captura">
+      <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.3"><rect x="2" y="3" width="10" height="8" rx="1.5"/><circle cx="7" cy="7" r="2.2"/><path d="M4.5 3l.8-1h3.4l.8 1"/></svg>
+      <span class="tab-label">Captura</span>
+    </div>
+    <div class="tab" onclick="sw('guiding',this)" title="Guiding">
+      <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.3"><polyline points="1,10 3,6 5,8 7,4 9,7 11,5 13,9"/><circle cx="7" cy="4" r="1" fill="currentColor" stroke="none"/></svg>
+      <span class="tab-label">Guiding</span>
+    </div>
     <div class="tab" onclick="sw('desktop',this)" title="KasmVNC">
       <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.3"><rect x="1" y="2" width="12" height="8" rx="1"/><line x1="5" y1="12" x2="9" y2="12"/><line x1="7" y1="10" x2="7" y2="12"/></svg>
       <span class="tab-label">KasmVNC</span>
@@ -425,6 +433,104 @@
       <span   id="dec-bar-val"                     style="display:none"></span>
     </div>
 
+    <!-- ══════════ CAPTURA ══════════ -->
+    <div id="p-capture" class="panel panel-scroll">
+      <div class="panel-bar panel-bar-scroll">
+        <span class="panel-bar-title">Captura</span>
+        <button class="bp-fs" onclick="enterFullscreen('p-capture')" title="Tela cheia">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M1 5V1h4M9 1h4v4M13 9v4H9M5 13H1V9"/></svg>
+        </button>
+      </div>
+
+      <div class="capture-layout">
+        <div class="capture-viewer">
+          <canvas id="capture-preview-canvas" class="capture-preview-canvas"></canvas>
+          <div class="cam-preview-placeholder" id="capture-preview-placeholder">
+            <svg width="44" height="44" viewBox="0 0 44 44" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="6" y="10" width="32" height="24" rx="3"/><circle cx="22" cy="22" r="7"/><path d="M15 10l2-4h10l2 4"/></svg>
+            <span>Aguardando imagem da câmera</span>
+          </div>
+        </div>
+
+        <div class="capture-controls">
+          <div class="sec">Exposição</div>
+          <div class="capture-grid">
+            <div class="cam-field">
+              <label class="cam-label">Exp (s)</label>
+              <input class="inp cam-inp" type="number" id="cap-exp" min="0.001" step="0.1" value="1"/>
+            </div>
+            <div class="cam-field">
+              <label class="cam-label">Ganho</label>
+              <input class="inp cam-inp" type="number" id="cap-gain" min="0" step="1" value="100"/>
+            </div>
+          </div>
+          <div class="cam-btn-row">
+            <button class="cam-framing-btn" id="cap-framing-btn" onclick="toggleFraming()">Framing</button>
+            <button class="cam-capture-btn" id="cap-capture-btn" onclick="toggleCapture()">Capturar</button>
+          </div>
+
+          <div class="sec">Sequência simples</div>
+          <div class="capture-grid">
+            <div class="cam-field">
+              <label class="cam-label">Frames</label>
+              <input class="inp cam-inp" type="number" id="seq-count" min="1" step="1" value="10"/>
+            </div>
+            <div class="cam-field">
+              <label class="cam-label">Intervalo (s)</label>
+              <input class="inp cam-inp" type="number" id="seq-delay" min="0" step="1" value="2"/>
+            </div>
+          </div>
+          <button class="bp bp-p" id="seq-btn" onclick="toggleSequence()">Iniciar sequência</button>
+          <div class="sequence-status" id="seq-status">Pronto</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════ GUIDING ══════════ -->
+    <div id="p-guiding" class="panel panel-scroll">
+      <div class="panel-bar panel-bar-scroll">
+        <span class="panel-bar-title">Guiding</span>
+        <button class="bp-fs" onclick="enterFullscreen('p-guiding')" title="Tela cheia">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M1 5V1h4M9 1h4v4M13 9v4H9M5 13H1V9"/></svg>
+        </button>
+      </div>
+
+      <div class="guiding-grid">
+        <div class="net-card"><div class="net-label">PHD2</div><div class="net-val" id="phd2-online">--</div></div>
+        <div class="net-card"><div class="net-label">Estado</div><div class="net-val" id="phd2-state">--</div></div>
+        <div class="net-card"><div class="net-label">Equipamento</div><div class="net-val" id="phd2-equipment">--</div></div>
+        <div class="net-card"><div class="net-label">Exposição guia</div><div class="net-val" id="phd2-exposure">--</div></div>
+      </div>
+
+      <div class="sec">Controle PHD2</div>
+      <div class="guiding-actions">
+        <button class="bp bp-s" onclick="refreshPHD2()">Atualizar</button>
+        <button class="bp bp-s" onclick="phd2Loop()">Loop</button>
+        <button class="bp bp-p" onclick="phd2Guide()">Guiar</button>
+        <button class="bp bp-s" onclick="phd2Dither()">Dither</button>
+        <button class="bp bp-s" onclick="phd2Stop()">Parar</button>
+      </div>
+
+      <div class="sec">Assentamento</div>
+      <div class="capture-grid">
+        <div class="cam-field">
+          <label class="cam-label">Erro máx (px)</label>
+          <input class="inp cam-inp" type="number" id="phd2-settle-px" min="0.1" step="0.1" value="1.5"/>
+        </div>
+        <div class="cam-field">
+          <label class="cam-label">Tempo (s)</label>
+          <input class="inp cam-inp" type="number" id="phd2-settle-time" min="1" step="1" value="8"/>
+        </div>
+        <div class="cam-field">
+          <label class="cam-label">Timeout (s)</label>
+          <input class="inp cam-inp" type="number" id="phd2-settle-timeout" min="5" step="5" value="60"/>
+        </div>
+        <div class="cam-field">
+          <label class="cam-label">Dither (px)</label>
+          <input class="inp cam-inp" type="number" id="phd2-dither-amount" min="0.1" step="0.5" value="3"/>
+        </div>
+      </div>
+    </div>
+
     <!-- ══════════ KASMVNC ══════════ -->
     <div id="p-desktop" class="panel panel-remote">
       <div class="remote-bar">
@@ -559,6 +665,7 @@
       <div class="sec">Serviços</div>
       <div class="drv-row"><span class="dot dx" id="svc-dot-indiweb"></span><div class="drv-txt"><div class="drv-name">INDI Web Manager</div><div class="drv-sub">:8624</div></div><a href="http://astropi.local:8624" target="_blank" class="bp bp-s sm">Abrir</a></div>
       <div class="drv-row"><span class="dot dx" id="svc-dot-kasmvnc"></span><div class="drv-txt"><div class="drv-name">KasmVNC</div><div class="drv-sub">:8443</div></div></div>
+      <div class="drv-row"><span class="dot dx" id="svc-dot-phd2"></span><div class="drv-txt"><div class="drv-name">PHD2 API</div><div class="drv-sub">:4400</div></div></div>
       <div class="drv-row"><span class="dot dx" id="svc-dot-ttyd"></span><div class="drv-txt"><div class="drv-name">ttyd · Terminal</div><div class="drv-sub">:7681</div></div></div>
       <div class="drv-row"><span class="dot dx" id="svc-dot-gpsd"></span><div class="drv-txt"><div class="drv-name">gpsd</div><div class="drv-sub">:2947</div></div></div>
       <div class="drv-row"><span class="dot dx" id="svc-dot-bridge"></span><div class="drv-txt"><div class="drv-name">Node.js bridge</div><div class="drv-sub">:3000</div></div></div>
