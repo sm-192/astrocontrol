@@ -1760,7 +1760,7 @@ async function doAuth(type) {
     const pwd  = $('pwd-terminal')?.value || '';
     if (!user || !pwd) { if (errEl) errEl.textContent = 'Preencha usuário e senha.'; return; }
     try {
-      const res = await fetch(`http://${WS_HOST}:${WS_PORT}/api/auth/terminal`, {
+      const res = await fetch('/api/auth/terminal', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ user, password: pwd }),
       });
@@ -1771,7 +1771,18 @@ async function doAuth(type) {
       const iframe = document.createElement('iframe');
       iframe.src = `http://${WS_HOST}:7681/`;
       iframe.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;border:none;background:#000;display:block;';
-      iframe.allow = 'fullscreen clipboard-read clipboard-write';
+      iframe.allow = 'fullscreen; clipboard-read; clipboard-write; keyboard-map';
+      iframe.tabIndex = 0;
+      iframe.onload = () => {
+        setTimeout(() => {
+          iframe.focus();
+          try { iframe.contentWindow?.focus(); } catch {}
+        }, 150);
+      };
+      iframe.addEventListener('pointerdown', () => {
+        iframe.focus();
+        try { iframe.contentWindow?.focus(); } catch {}
+      });
       frame.appendChild(iframe);
       if (status) status.textContent = 'Conectado';
     } catch (e) {
